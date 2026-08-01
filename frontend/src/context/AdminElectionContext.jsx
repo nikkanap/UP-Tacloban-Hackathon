@@ -104,6 +104,23 @@ export function AdminElectionProvider({ children }) {
   const lockElection = () => setLocked(true);
   const publishResults = () => setPublished(true);
 
+  // Clears everything back to a fresh draft. Locking makes the current election
+  // immutable; starting a new one is the way out of that.
+  const startNewElection = () => {
+    setElection({
+      title: "",
+      description: "",
+      startTime: "",
+      endTime: "",
+      requireCredential: true,
+      positions: [{ id: createId(), name: "President", seats: 1 }],
+    });
+    setCandidates([]);
+    setVoters([]);
+    setLocked(false);
+    setPublished(false);
+  };
+
   // draft -> live -> ended. Time-based, so callers that need it to tick should
   // already be re-rendering (the monitoring page does, via useCountdown).
   const getElectionStatus = () => {
@@ -135,6 +152,7 @@ export function AdminElectionProvider({ children }) {
         lockElection,
         published,
         publishResults,
+        startNewElection,
         getElectionStatus,
         pastElections: PAST_ELECTIONS,
       }}

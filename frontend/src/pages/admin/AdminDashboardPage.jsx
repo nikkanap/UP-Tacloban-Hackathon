@@ -1,15 +1,19 @@
 import { useNavigate } from "react-router-dom";
+import { useAdminElection } from "../../context/AdminElectionContext";
 
 function AdminDashboardPage() {
   const navigate = useNavigate();
+  const { voters, getElectionStatus } = useAdminElection();
+
+  const status = getElectionStatus();
 
   const stats = [
-    { label: "Active Elections", value: 1 },
+    { label: "Active Elections", value: status === "live" ? 1 : 0 },
     {
       label: "Draft Elections",
-      value: 1,
+      value: status === "draft" ? 1 : 0,
     },
-    { label: "Total Registered Voters", value: 248 },
+    { label: "Total Registered Voters", value: voters.length },
   ];
 
   const quickActions = [

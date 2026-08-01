@@ -74,6 +74,14 @@ function ReviewAndLockPage() {
 
   return (
     <div className="flex flex-col gap-6 min-h-full">
+      <button
+        type="button"
+        onClick={() => navigate("/admin/dashboard")}
+        className="self-start text-sm font-medium text-muted transition hover:text-foreground"
+      >
+        ← Back to Dashboard
+      </button>
+
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex flex-col gap-2">
           <h1>Review Registered Data</h1>

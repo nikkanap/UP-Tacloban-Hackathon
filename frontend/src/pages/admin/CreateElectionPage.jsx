@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import LockedNotice from "../../components/LockedNotice";
 import { useAdminElection } from "../../context/AdminElectionContext";
 
 const inputClass =
@@ -8,13 +7,52 @@ const inputClass =
 
 function CreateElectionPage() {
   const navigate = useNavigate();
-  const { election, updateElection, addPosition, removePosition, locked } =
-    useAdminElection();
+  const {
+    election,
+    updateElection,
+    addPosition,
+    removePosition,
+    locked,
+    startNewElection,
+  } = useAdminElection();
 
   const [positionName, setPositionName] = useState("");
   const [positionSeats, setPositionSeats] = useState(1);
 
-  if (locked) return <LockedNotice />;
+  // The current election is locked, so this page can only mean "start another".
+  // Ask first — starting over clears the registered candidates and voters.
+  if (locked) {
+    return (
+      <div className="flex flex-col gap-4 min-h-full">
+        <button
+          type="button"
+          onClick={() => navigate("/admin/dashboard")}
+          className="self-start text-sm font-medium text-muted transition hover:text-foreground"
+        >
+          ← Back to Dashboard
+        </button>
+
+        <div className="flex flex-col gap-2">
+          <h1>Start a new election?</h1>
+          <p className="text-muted max-w-2xl">
+            The current election is locked, so it can no longer be edited.
+            Starting a new one clears the registered candidates and voters and
+            gives you a fresh draft.
+          </p>
+        </div>
+
+        <div className="flex">
+          <button
+            type="button"
+            onClick={startNewElection}
+            className="px-5 py-2.5 rounded-lg font-medium bg-accent text-accent-foreground transition hover:opacity-90 active:opacity-80"
+          >
+            Start New Election
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleAddPosition = () => {
     if (!positionName.trim()) return;
@@ -30,6 +68,14 @@ function CreateElectionPage() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6 min-h-full">
+      <button
+        type="button"
+        onClick={() => navigate("/admin/dashboard")}
+        className="self-start text-sm font-medium text-muted transition hover:text-foreground"
+      >
+        ← Back to Dashboard
+      </button>
+
       <div className="flex flex-col gap-2">
         <h1>Create Election</h1>
         <p className="text-muted max-w-2xl">

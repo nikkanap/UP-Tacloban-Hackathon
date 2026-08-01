@@ -47,6 +47,14 @@ function RegisterCandidatesPage() {
 
   return (
     <div className="flex flex-col gap-6 min-h-full">
+      <button
+        type="button"
+        onClick={() => navigate("/admin/dashboard")}
+        className="self-start text-sm font-medium text-muted transition hover:text-foreground"
+      >
+        ← Back to Dashboard
+      </button>
+
       <div className="flex flex-col gap-2">
         <h1>Register Candidates</h1>
         <p className="text-muted max-w-2xl">
