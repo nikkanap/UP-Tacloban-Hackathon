@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from dotenv import load_dotenv
+from os import getenv
+import os
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +25,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-4&d9k@lg^cn(ac=m+@gs4nn*d35kpj#c)&zd_4@&pwg$#-g2fp'
+SECRET_KEY = getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:9000", # update this based on vite react port
+    "http://localhost:9000",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:9000", 
+    "http://localhost:9000", 
+]
 
 
 # Application definition
@@ -37,6 +55,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'server'
 ]
 
 MIDDLEWARE = [
@@ -69,14 +89,21 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+        'ENGINE': getenv('DATABASE_ENGINE') or 'django.db.backends.postgresql',
+        'NAME' : getenv('DATABASE_NAME'),
+        'USER' : getenv('DATABASE_USER'),
+        'PASSWORD' : getenv('DATABASE_PASSWORD'),
+        'HOST' : getenv('DATABASE_HOST'),
+        'PORT' : getenv('DATABASE_PORT'),
+    },
 }
 
 
