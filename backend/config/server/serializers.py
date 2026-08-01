@@ -24,3 +24,21 @@ class CandidateSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Candidate
         fields = '__all__'
+
+
+class PositionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Position
+        fields = '__all__'
+
+
+class VoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Vote
+        fields = '__all__'
+
+
+class NFTSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.NFT
+        fields = '__all__'
