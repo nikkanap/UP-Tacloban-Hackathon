@@ -1,5 +1,7 @@
 # virtual environment
 venv/
+config/*.pyc
+server/*.pyc
 
 # .env file
 .env
