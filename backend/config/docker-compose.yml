@@ -1,0 +1,65 @@
+services:
+  db:
+    container_name: uptc-psql
+    image: postgres
+    environment:
+      POSTGRES_DB: hackathon
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - "5332:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${DATABASE_USER} -d hackathon'"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  uptc-makemigrate:
+    env_file:
+      - .env
+    image: uptc-makemigrate
+    container_name: make-migrations
+    build: .
+    command: python manage.py makemigrations
+    depends_on:
+      db:
+        condition: service_healthy
+
+  uptc-migrate:
+    env_file:
+      - .env
+    image: uptc-migrate
+    container_name: migrate
+    build: .
+    command: python manage.py migrate
+    depends_on:
+      uptc-makemigrate:
+        condition: service_completed_successfully
+
+  uptc-server:
+    env_file:
+      - .env
+    container_name: uptc-server
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    expose:
+      - "8000"
+    depends_on:
+      uptc-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./media:/app/media
+      - ./static:/app/static
+    depends_on:
+      - uptc-server
+    restart: unless-stopped
