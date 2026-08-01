@@ -44,7 +44,7 @@ class Candidate(models.Model):
   election = models.ForeignKey(Election, on_delete=models.CASCADE, related_name="candidates")   
   
   def __str__(self):
-      return self.name
+      return self.full_name
   
 class Contract(models.Model):
   wallet_public_key = models.CharField(max_length=100)  
@@ -57,7 +57,7 @@ class Vote(models.Model):
   voter = models.ForeignKey(Voter, on_delete=models.CASCADE)
   candidate = models.ForeignKey(Candidate, on_delete=models.CASCADE)
   election = models.ForeignKey(Election, on_delete=models.CASCADE, related_name='votes')
-  vote_txid = models.CharField(max_length=100)
+  vote_txid = models.CharField(max_length=100, null=True, blank=True)
   date_voted = models.DateTimeField(auto_now_add=True)
     
   def __str__(self):

@@ -1,7 +1,7 @@
 pragma cashscript ^0.13.0;
 
 // this contract; commitment = candidateId(8 bytes) + count(8 bytes).
-contract Vote(bytes20 owner, bytes electionCategory, int openTime, int closeTime){
+contract VoteContract(bytes20 owner, bytes electionCategory, int openTime, int closeTime){
     function castVote(){
         // checks if the election has started already
         require(tx.time >= openTime);

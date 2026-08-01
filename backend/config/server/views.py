@@ -20,7 +20,6 @@ class VotersViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.VoterSerializer
     #permission_classes = [ IsVoter ]
 
-
 class ElectionsViewSet(viewsets.ModelViewSet):
   queryset = models.Election.objects.all()
   serializer_class = serializers.ElectionSerializer
@@ -78,79 +77,89 @@ class ElectionsViewSet(viewsets.ModelViewSet):
       print(f"Failed to create election NFT: {e}")
 
 class ContractsViewSet(viewsets.ModelViewSet):
-    queryset = models.Contract.objects.all()
-    serializer_class = serializers.ContractSerializer
-    #permission_classes = [ IsVoter ]
+  queryset = models.Contract.objects.all()
+  serializer_class = serializers.ContractSerializer
+  #permission_classes = [ IsVoter ]
 
 
 class CandidatesViewSet(viewsets.ModelViewSet):
-    queryset = models.Candidate.objects.all()
-    serializer_class = serializers.CandidateSerializer
-    #permission_classes = [ IsAdmin ]
-    
-    def create(self, request, *args, **kwargs):
-        # Create election first
-        response = super().create(request, *args, **kwargs)
-    
-        # Get the created election object
-        candidate_id = response.data["id"]
-        candidate = models.Candidate.objects.get(id=candidate_id)
-        election = candidate.election
-    
-        self.create_candidate_nft(election, candidate)
-        self.send_candidate_nft_to_contract(election, candidate)
+  queryset = models.Candidate.objects.all()
+  serializer_class = serializers.CandidateSerializer
+  #permission_classes = [ IsAdmin ]
+  
+  def create(self, request, *args, **kwargs):
+      # Create election first
+      print(1, flush=True)
+      response = super().create(request, *args, **kwargs)
+  
+      # Get the created election object
+      print(2, flush=True)
+      candidate_id = response.data["id"]
+      print(3, flush=True)
+      candidate = models.Candidate.objects.get(id=candidate_id)
+      print(4, flush=True)
+      election = candidate.election
+  
+      self.create_candidate_nft(election, candidate)
+      print(5, flush=True)
+      self.send_candidate_nft_to_contract(election, candidate)
+      print(6, flush=True)
 
-        return response
-    
-    def create_candidate_nft(self, election, candidate):
-        try:
-            response = requests.post(
-                f"{BLOCKCHAIN_API}/nft/generate-candidate-nft",
-                json={
-                    "nft_category": election.nft_category,
-                    "candidate_id": candidate.id,
-                    "position_id": candidate.position.id
-                },
-                timeout=60
-            )
+      return response
+  
+  def create_candidate_nft(self, election, candidate):
+    try:
+      print('inside create candidate nft', flush=True)
+      response = requests.post(
+        f"{BLOCKCHAIN_API}/nft/generate-candidate-nft",
+        json={
+          "nft_category": election.nft_category,
+          "candidate_id": candidate.id,
+          "position_id": candidate.position.id
+        },
+        timeout=60
+      )
 
-            response.raise_for_status()
+      print('mimi', flush=True)
+      response.raise_for_status()
+      print('momo', flush=True)
 
-            data = response.json()
-            
-            print(
-                f"Created candidate NFT for {candidate.id}",
-                data
-            )
+      data = response.json()
+      print(
+        f"Created candidate NFT for {candidate.id}",
+        data
+      )
 
-        except Exception as e:
-            print(f"Failed creating candidate NFT for {candidate.id}: {e}")
-    
-    
-    def send_candidate_nft_to_contract(self, election, candidate):
-      try:
-        response = requests.post(
-            f"{BLOCKCHAIN_API}/nft/send-nft-to-contract",
-            json={
-              "nft_category": election.nft_category,
-              "candidate_id": candidate.id,
-              "open_time": int(election.date_start.timestamp()),
-              "close_time": int(election.date_end.timestamp())
-            },
-            timeout=60
-        )
+    except Exception as e:
+      print(f"Failed creating candidate NFT for {candidate.id}: {e}")
+  
+  
+  def send_candidate_nft_to_contract(self, election, candidate):
+    try:
+      response = requests.post(
+        f"{BLOCKCHAIN_API}/nft/send-nft-to-contract",
+        json={
+          "nft_category": election.nft_category,
+          "candidate_id": candidate.id,
+          "open_time": int(election.date_start.timestamp()),
+          "close_time": int(election.date_end.timestamp())
+        },
+        timeout=60
+      )
 
-        response.raise_for_status()
+      response.raise_for_status()
 
-        data = response.json()
-        
-        print(
-            f"Sent candidate NFT {candidate.id} to contract",
-            data
-        )
+      data = response.json()
+      
+      print(
+        f"Sent candidate NFT {candidate.id} to contract",
+        data
+      )
 
-      except Exception as e:
-        print(f"Failed creating candidate NFT for {candidate.id}: {e}")
+    except Exception as e:
+      print(f"Failed sending candidate NFT for {candidate.id}: {e}")
+             
+             
                   
 class PositionsViewSet(viewsets.ModelViewSet):
     queryset = models.Position.objects.all()
@@ -163,6 +172,39 @@ class NFTsViewSet(viewsets.ModelViewSet):
 class VotesViewSet(viewsets.ModelViewSet):
     queryset = models.Vote.objects.all()
     serializer_class = serializers.VoteSerializer
+    
+    def create(self, request, *args, **kwargs):
+        # Create election first
+        response = super().create(request, *args, **kwargs)
+    
+        # Get the created election object
+        vote_id = response.data["id"]
+        vote = models.Vote.objects.get(id=vote_id)
+        self.castVote(vote)
+
+        return response
+      
+    def castVote(self, vote):
+      response = requests.post(
+          f"{BLOCKCHAIN_API}/vote",
+          json={
+              "nft_category": vote.election.nft_category, 
+              "candidate_id": vote.candidate.id, 
+              "voter_id": vote.voter.id,
+              "open_time": int(vote.election.date_start.timestamp()),
+              "close_time": int(vote.election.date_end.timestamp())
+          },
+          timeout=60
+      )
+
+      response.raise_for_status()
+      return Response(
+          {
+            "success": True,
+            "txid": response.txid
+          },
+          status=status.HTTP_200_OK
+      )
     
 class CreateVoterNFTsView(views.APIView):
   
@@ -212,3 +254,4 @@ class CreateVoterNFTsView(views.APIView):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+            

@@ -6,6 +6,7 @@ import {
   sendNFToContract,
   castVote
 } from "./election.js";
+import { sleep } from "./utils.js";
 
 const app = express();
 
@@ -68,7 +69,7 @@ app.post("/nft/generate-voter-nft", async (req, res) => {
 
     const result = await generateVoterNFT(nft_category, voter_id, position_id);
     console.log("/nft/generate-voter-nft", result);
-    
+
     res.json({
       success: true,
       result
@@ -86,22 +87,31 @@ app.post("/nft/generate-voter-nft", async (req, res) => {
 
 app.post("/nft/send-nft-to-contract", async (req, res) => {
   try {
+    console.log("BODY:", req.body);
+
     const { 
       nft_category,
       candidate_id,
       open_time,
       close_time  
     } = req.body;
+    console.log('hereeee')
     const txid = await sendNFToContract(nft_category, candidate_id, open_time, close_time);
     if (!txid) throw new Error ('Failed to send NFT to contract!')
     console.log("/nft/send-nft-to-contract", txid);
-
-    res.json({
-      success: true,
-      txid
-    });
+    console.dir(txid, { depth: null });
+    res.json(
+      JSON.parse(
+        JSON.stringify(txid, (_, value) =>
+          typeof value === "bigint"
+            ? value.toString()
+            : value
+        )
+      )
+    );
 
   } catch(error) {
+    console.error(error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -128,6 +138,7 @@ app.post("/vote", async (req, res) => {
     });
 
   } catch(error) {
+    console.error(error)
     res.status(500).json({
       success: false,
       error: error.message
