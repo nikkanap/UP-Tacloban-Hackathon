@@ -1,6 +1,6 @@
 import { useRef } from "react";
 
-function PositionTabs({ positions, activeIndex, onSelect, completed = [] }) {
+function PositionTabs({ positions, activeIndex, onSelect, completed = [], alwaysShowArrows = false }) {
     const trackRef = useRef(null);
 
     const scrollByAmount = (direction) => {
@@ -9,8 +9,19 @@ function PositionTabs({ positions, activeIndex, onSelect, completed = [] }) {
         track.scrollBy({ left: direction * 160, behavior: "smooth" });
     };
 
+    const arrowVisibility = alwaysShowArrows ? "flex" : "flex md:hidden";
+
     return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2">
+            <button
+                type="button"
+                onClick={() => scrollByAmount(-1)}
+                className={`${arrowVisibility} items-center justify-center w-9 h-9 shrink-0 rounded-full border border-border bg-surface text-foreground transition hover:bg-accent hover:text-accent-foreground`}
+                aria-label="Scroll positions left"
+            >
+                ‹
+            </button>
+
             <div
                 ref={trackRef}
                 className="flex gap-2 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -51,7 +62,7 @@ function PositionTabs({ positions, activeIndex, onSelect, completed = [] }) {
             <button
                 type="button"
                 onClick={() => scrollByAmount(1)}
-                className="flex items-center justify-center w-9 h-9 shrink-0 rounded-full border border-border bg-surface text-foreground transition hover:bg-accent hover:text-accent-foreground"
+                className={`${arrowVisibility} items-center justify-center w-9 h-9 shrink-0 rounded-full border border-border bg-surface text-foreground transition hover:bg-accent hover:text-accent-foreground`}
                 aria-label="Scroll positions right"
             >
                 ›

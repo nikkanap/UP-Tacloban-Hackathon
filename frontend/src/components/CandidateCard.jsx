@@ -19,7 +19,7 @@ function CandidateCard({ name, party, image, selected, onClick }) {
                     <img
                         src={image}
                         alt={name}
-                        className="w-[90%] h-[90%] object-cover"
+                        className="w-full h-full object-cover"
                     />
                 ) : (
                     <span className="font-semibold text-muted text-center px-2">{name}</span>
