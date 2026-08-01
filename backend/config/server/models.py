@@ -7,7 +7,7 @@ class Voter(models.Model):
     MALE = 'MA', 'Male'
     NOT_TO_SAY = 'NTS', 'Not to say'
   
-  id = models.CharField(max_length=100, unique=True, primary_key=True)
+  id = models.IntegerField(unique=True, primary_key=True)
   full_name = models.CharField(max_length=200)
   gender = models.CharField(max_length=3, choices=Gender.choices)
   date_of_birth = models.DateField()
@@ -19,7 +19,7 @@ class Voter(models.Model):
     return f'{self.id}' 
   
 class Election(models.Model):
-  id = models.CharField(max_length=100, unique=True, primary_key=True)
+  id = models.IntegerField(unique=True, primary_key=True)
   name = models.CharField(max_length=100, unique=True)
   date_created = models.DateTimeField(auto_now_add=True) 
   date_start = models.DateTimeField() 
@@ -30,7 +30,7 @@ class Election(models.Model):
       return self.name
   
 class Position(models.Model):
-  id = models.CharField(max_length=100, unique=True, primary_key=True)
+  id = models.IntegerField(unique=True, primary_key=True)
   election = models.ForeignKey(Election, on_delete=models.CASCADE)
   name = models.CharField(max_length=100)
     
@@ -38,7 +38,7 @@ class Position(models.Model):
     return f'{self.id}'  
   
 class Candidate(models.Model):
-  id = models.CharField(max_length=100, unique=True, primary_key=True)
+  id = models.IntegerField(unique=True, primary_key=True)
   full_name = models.CharField(max_length=200)
   position = models.ForeignKey(Position, on_delete=models.CASCADE) 
   election = models.ForeignKey(Election, on_delete=models.CASCADE, related_name="candidates")   
@@ -64,7 +64,7 @@ class Vote(models.Model):
     return f'{self.id}'
   
 class NFT(models.Model):
-  id = models.CharField(max_length=100, unique=True, primary_key=True)
+  id = models.IntegerField(unique=True, primary_key=True)
   user = models.ForeignKey(Voter, on_delete=models.CASCADE)
   election = models.ForeignKey(Election, on_delete=models.CASCADE)
     
