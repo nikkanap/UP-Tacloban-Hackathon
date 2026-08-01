@@ -13,6 +13,7 @@ import defaultCandidateImage from "./assets/images/candidates/default-candidate.
 import BallotConfirmationPage from "./pages/BallotConfirmationPage";
 import VerifyVotePage from "./pages/VerifyVotePage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import CreateElectionPage from "./pages/admin/CreateElectionPage";
 
 export const userContext = createContext();
 export const electionDataContext = createContext();
@@ -191,6 +192,12 @@ function App() {
         </Route>
         <Route element={<DashboardLayout />}>
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+        </Route>
+        <Route element={<DashboardLayout />}>
+          <Route
+            path="/admin/create-election"
+            element={<CreateElectionPage />}
+          />
         </Route>
       </Routes>
     </userContext.Provider>
