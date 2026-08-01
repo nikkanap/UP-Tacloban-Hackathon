@@ -1,34 +1,140 @@
 {
   "contractName": "Vote",
   "constructorInputs": [
+    { "name": "owner", "type": "bytes20" },
     { "name": "electionCategory", "type": "bytes" },
-    { "name": "openTime", "type": "int" }
+    { "name": "openTime", "type": "int" },
+    { "name": "closeTime", "type": "int" }
   ],
   "abi": [
-    { "name": "castVote", "inputs": [] }
+    { "name": "castVote", "inputs": [] },
+    {
+      "name": "returnCandidateNFTToWallet",
+      "inputs": [
+        { "name": "signature", "type": "sig" },
+        { "name": "pk", "type": "pubkey" }
+      ]
+    }
   ],
-  "bytecode": "OP_TXINPUTCOUNT OP_2 OP_GREATERTHANOREQUAL OP_VERIFY OP_TXINPUTCOUNT OP_3 OP_LESSTHANOREQUAL OP_VERIFY OP_SWAP OP_CHECKLOCKTIMEVERIFY OP_DROP OP_0 OP_UTXOTOKENCATEGORY OP_OVER OP_1 OP_CAT OP_EQUALVERIFY OP_1 OP_UTXOTOKENCATEGORY OP_OVER OP_EQUALVERIFY OP_TXINPUTCOUNT OP_3 OP_NUMEQUAL OP_IF OP_2 OP_UTXOTOKENCATEGORY OP_0 OP_EQUALVERIFY OP_ENDIF OP_0 OP_UTXOTOKENCOMMITMENT OP_8 OP_SPLIT OP_BIN2NUM OP_1ADD OP_8 OP_NUM2BIN OP_CAT OP_TXOUTPUTCOUNT OP_2 OP_LESSTHANOREQUAL OP_VERIFY OP_0 OP_OUTPUTTOKENCATEGORY OP_ROT OP_1 OP_CAT OP_EQUALVERIFY OP_0 OP_OUTPUTTOKENCOMMITMENT OP_EQUALVERIFY OP_0 OP_OUTPUTBYTECODE OP_0 OP_UTXOBYTECODE OP_EQUALVERIFY OP_0 OP_OUTPUTVALUE OP_0 OP_UTXOVALUE OP_NUMEQUALVERIFY OP_0 OP_OUTPUTTOKENAMOUNT OP_0 OP_NUMEQUALVERIFY OP_TXOUTPUTCOUNT OP_2 OP_NUMEQUAL OP_IF OP_1 OP_OUTPUTTOKENCATEGORY OP_0 OP_EQUALVERIFY OP_ENDIF OP_1",
-  "source": "pragma cashscript ^0.13.0;\n\n// this contract; commitment = candidateId(4 bytes) + count(8 bytes).\ncontract Vote(bytes electionCategory, int openTime){\n    function castVote(){\n        require(tx.inputs.length >= 2);\n        require(tx.inputs.length <= 3);\n\n        // checks if the election has started already\n        require(tx.time >= openTime);\n\n        //input 0 - candidate tally nft (mutable capability - 0x01)\n        require(tx.inputs[0].tokenCategory == electionCategory + 0x01);\n\n        //input 1 - voters credential nft immutable (no capability byte)\n        //destroyed here to prevent double-voting\n        require(tx.inputs[1].tokenCategory == electionCategory);\n\n        if(tx.inputs.length == 3){\n            //if third input exist it should only be bch, not nft\n            require(tx.inputs[2].tokenCategory == 0x);\n        }\n\n        //read candidate nft\n        bytes candidateId, bytes countBytes = tx.inputs[0].nftCommitment.split(8);\n        int newCount = int(countBytes) + 1;\n        bytes newCommitment = candidateId + toPaddedBytes(newCount, 8); // Candidate ID stays exactly the same.\n\n        //burn the voting nft, the nft credential from the voters appears only as input, \n        //it is never created in any output\n        require(tx.outputs.length <= 2);       \n        \n        // validate output tally nft\n        require(tx.outputs[0].tokenCategory == electionCategory + 0x01);\n        require(tx.outputs[0].nftCommitment == newCommitment);\n        require(tx.outputs[0].lockingBytecode == tx.inputs[0].lockingBytecode);\n        require(tx.outputs[0].value == tx.inputs[0].value);\n        require(tx.outputs[0].tokenAmount == 0);\n\n        // make sure that the 2nd output is only a bch utxo if available, not the token\n        if(tx.outputs.length == 2){\n            require(tx.outputs[1].tokenCategory == 0x);\n        }\n    }\n}",
-  "fingerprint": "351343b00cc58da28a6fa2d5d667c43eb2784d336b1deebdc75d4114afc69960",
+  "bytecode": "OP_4 OP_PICK OP_0 OP_NUMEQUAL OP_IF OP_ROT OP_CHECKLOCKTIMEVERIFY OP_DROP OP_TXINPUTCOUNT OP_2 OP_NUMEQUALVERIFY OP_TXOUTPUTCOUNT OP_1 OP_NUMEQUALVERIFY OP_0 OP_UTXOTOKENCATEGORY 20 OP_SPLIT OP_1 OP_UTXOTOKENCATEGORY 20 OP_SPLIT OP_0 OP_OUTPUTTOKENCATEGORY 20 OP_SPLIT OP_5 OP_ROLL OP_7 OP_PICK OP_EQUALVERIFY OP_4 OP_ROLL OP_1 OP_EQUALVERIFY OP_3 OP_ROLL OP_5 OP_PICK OP_EQUALVERIFY OP_ROT OP_0 OP_EQUALVERIFY OP_SWAP OP_3 OP_ROLL OP_EQUALVERIFY OP_1 OP_EQUALVERIFY OP_0 OP_UTXOTOKENCOMMITMENT OP_8 OP_SPLIT OP_8 OP_SPLIT OP_0 OP_UTXOTOKENCOMMITMENT OP_8 OP_SPLIT OP_3 OP_PICK OP_EQUALVERIFY OP_SWAP OP_BIN2NUM OP_1ADD OP_2SWAP OP_CAT OP_SWAP OP_8 OP_NUM2BIN OP_CAT OP_0 OP_OUTPUTTOKENCOMMITMENT OP_EQUALVERIFY OP_0 OP_OUTPUTBYTECODE OP_0 OP_UTXOBYTECODE OP_EQUALVERIFY OP_0 OP_OUTPUTVALUE OP_0 OP_UTXOVALUE OP_NUMEQUALVERIFY OP_0 OP_OUTPUTTOKENAMOUNT OP_0 OP_NUMEQUALVERIFY OP_2DROP OP_2DROP OP_1 OP_ELSE OP_4 OP_ROLL OP_1 OP_NUMEQUALVERIFY OP_3 OP_ROLL OP_CHECKLOCKTIMEVERIFY OP_DROP OP_TXINPUTCOUNT OP_1 OP_NUMEQUALVERIFY OP_TXOUTPUTCOUNT OP_1 OP_GREATERTHANOREQUAL OP_VERIFY OP_0 OP_UTXOTOKENCATEGORY 20 OP_SPLIT OP_0 OP_OUTPUTTOKENCATEGORY 20 OP_SPLIT OP_ROT OP_1 OP_EQUALVERIFY OP_ROT OP_4 OP_PICK OP_EQUALVERIFY OP_1 OP_EQUALVERIFY OP_ROT OP_EQUALVERIFY OP_3 OP_PICK OP_HASH160 OP_OVER OP_EQUALVERIFY OP_2SWAP OP_SWAP OP_CHECKSIGVERIFY 76a914 OP_SWAP OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_EQUAL OP_NIP OP_ENDIF",
+  "source": "pragma cashscript ^0.13.0;\n\n// this contract; commitment = candidateId(8 bytes) + count(8 bytes).\ncontract Vote(bytes20 owner, bytes electionCategory, int openTime, int closeTime){\n    function castVote(){\n        // checks if the election has started already\n        require(tx.time >= openTime);\n        console.log('still ongoing election');\n\n        // inputs length\n        require(tx.inputs.length == 2);\n        require(tx.outputs.length == 1);    \n        console.log('valid input and output lengths');\n\n        //input 0 - candidate tally nft (mutable capability - 0x01)\n        bytes32 input0TokenCategory, bytes input0Capability = tx.inputs[0].tokenCategory.split(32);\n        bytes32 input1TokenCategory, bytes input1Capability = tx.inputs[1].tokenCategory.split(32);\n        bytes32 outputTokenCategory, bytes outputCapability = tx.outputs[0].tokenCategory.split(32);\n\n        require(input0TokenCategory == electionCategory);   \n        require(input0Capability == 0x01);\n        console.log('valid input[0]');\n\n        require(input1TokenCategory == electionCategory);\n        require(input1Capability == 0x);\n        console.log('valid input[1]');\n\n        require(outputTokenCategory == electionCategory);\n        require(outputCapability == 0x01);\n        console.log('valid output[0]');\n\n        //read candidate nft\n        bytes candidateId, bytes remaining = tx.inputs[0].nftCommitment.split(8);\n        bytes candidatePositionId, bytes countBytes = remaining.split(8); // also read the position and count\n\n        // read voter nft\n        bytes voterId, bytes votingPositionId = tx.inputs[0].nftCommitment.split(8);\n        console.log(voterId); // prevents errors\n        require(candidatePositionId == votingPositionId); // check if we're voting for the specific position\n        console.log('voter NFT is valid for voting for this position');\n\n        // updating the candidate NFT\n        int newCount = int(countBytes) + 1;\n        bytes newCommitment = candidateId + candidatePositionId + toPaddedBytes(newCount, 8); // Candidate ID stays exactly the same.\n\n        // validate output tally nft\n        require(tx.outputs[0].nftCommitment == newCommitment);\n        require(tx.outputs[0].lockingBytecode == tx.inputs[0].lockingBytecode);\n        require(tx.outputs[0].value == tx.inputs[0].value);\n        require(tx.outputs[0].tokenAmount == 0);\n    }\n\n    // returning the candidate NFTs to the wallet (one by one)\n    function returnCandidateNFTToWallet(sig signature, pubkey pk) {\n        // checks if election is closed\n        require(tx.time >= closeTime);\n        \n        // checks input and output lengths\n        require(tx.inputs.length == 1);\n        require(tx.outputs.length >= 1);\n        console.log('valid input and output lengths');\n\n        // verifies tokenCat output and input are the same\n        bytes32 inputTokenCategory, bytes inputCapability = tx.inputs[0].tokenCategory.split(32);\n        bytes32 outputTokenCategory, bytes outputCapability = tx.outputs[0].tokenCategory.split(32);\n        require(inputCapability == 0x01);\n        require(inputTokenCategory == electionCategory);\n        console.log('valid input[0]');\n        \n        require(outputCapability == 0x01);\n        require(outputTokenCategory == electionCategory);\n        console.log('valid output[0]');\n\n        // checks if owner of wallet and signature\n        require(hash160(pk) == owner);\n        require(checkSig(signature, pk));\n        console.log('valid owner of wallet');\n\n        bytes25 ownerLock = new LockingBytecodeP2PKH(owner);\n        bool sendsToOwner = tx.outputs[0].lockingBytecode == ownerLock;\n        require(sendsToOwner);\n        console.log('sending candidate NFT to owner of wallet');\n    }\n}",
+  "fingerprint": "c0e3adc96f9fb85604eca37af4581f75c7346e3fd8442b3a3ce0e94dec3f9952",
   "debug": {
-    "bytecode": "c352a269c353a1697cb17500ce78517e8851ce7888c3539c6352ce00886800cf587f818b58807ec452a16900d17b517e8800d28800cd00c78800cc00c69d00d3009dc4529c6351d100886851",
-    "sourceMap": "6:16:6:32;:36::37;:16:::1;:8::39;7:16:7:32:0;:36::37;:16:::1;:8::39;10:27:10:35:0;:8::37:1;;13:26:13:27:0;:16::42:1;:46::62:0;:65::69;:46:::1;:8::71;17:26:17:27:0;:16::42:1;:46::62:0;:8::64:1;19:11:19:27:0;:31::32;:11:::1;:33:22:9:0;21:30:21:31;:20::46:1;:50::52:0;:12::54:1;19:33:22:9;25:56:25:57:0;:46::72:1;:79::80:0;:46::81:1;26:23:26:38;:::42;27:68:27:69:0;:44::70:1;:30;31:16:31:33:0;:37::38;:16:::1;:8::40;34:27:34:28:0;:16::43:1;:47::63:0;:66::70;:47:::1;:8::72;35:27:35:28:0;:16::43:1;:8::62;36:27:36:28:0;:16::45:1;:59::60:0;:49::77:1;:8::79;37:27:37:28:0;:16::35:1;:49::50:0;:39::57:1;:8::59;38:27:38:28:0;:16::41:1;:45::46:0;:8::48:1;41:11:41:28:0;:32::33;:11:::1;:34:43:9:0;42:31:42:32;:20::47:1;:51::53:0;:12::55:1;41:34:43:9;5:23:44:5",
-    "logs": [],
+    "bytecode": "5479009c637bb175c3529dc4519d00ce01207f51ce01207f00d101207f557a577988547a5188537a5579887b00887c537a88518800cf587f587f00cf587f5379887c818b727e7c58807e00d28800cd00c78800cc00c69d00d3009d6d6d5167547a519d537ab175c3519dc451a26900ce01207f00d101207f7b51887b54798851887b885379a97888727cad0376a9147c7e0288ac7e00cd877768",
+    "sourceMap": "5:4:51:5;;;;;7:27:7:35;:8::37:1;;11:16:11:32:0;:36::37;:8::39:1;12:16:12:33:0;:37::38;:8::40:1;16:72:16:73:0;:62::88:1;:95::97:0;:62::98:1;17:72:17:73:0;:62::88:1;:95::97:0;:62::98:1;18:73:18:74:0;:62::89:1;:96::98:0;:62::99:1;20:16:20:35:0;;:39::55;;:8::57:1;21:16:21:32:0;;:36::40;:8::42:1;24:16:24:35:0;;:39::55;;:8::57:1;25:16:25:32:0;:36::38;:8::40:1;28:16:28:35:0;:39::55;;:8::57:1;29:36:29:40:0;:8::42:1;33:55:33:56:0;:45::71:1;:78::79:0;:45::80:1;34:70:34:71:0;:54::72:1;37:58:37:59:0;:48::74:1;:81::82:0;:48::83:1;39:16:39:35:0;;:8::57:1;43:27:43:37:0;:23::38:1;:::42;44:30:44:63:0;::::1;:80::88:0;:90::91;:66::92:1;:30;47:27:47:28:0;:16::43:1;:8::62;48:27:48:28:0;:16::45:1;:59::60:0;:49::77:1;:8::79;49:27:49:28:0;:16::35:1;:49::50:0;:39::57:1;:8::59;50:27:50:28:0;:16::41:1;:45::46:0;:8::48:1;5:23:51:5;;;:4;54::83::0;;;;56:27:56:36;;:8::38:1;;59:16:59:32:0;:36::37;:8::39:1;60:16:60:33:0;:37::38;:16:::1;:8::40;64:70:64:71:0;:60::86:1;:93::95:0;:60::96:1;65:73:65:74:0;:62::89:1;:96::98:0;:62::99:1;66:16:66:31:0;:35::39;:8::41:1;67:16:67:34:0;:38::54;;:8::56:1;70:36:70:40:0;:8::42:1;71:39:71:55:0;:8::57:1;75:24:75:26:0;;:16::27:1;:31::36:0;:8::38:1;76:25:76::0;;:8::41:1;79:28:79:59:0;:53::58;:28::59:1;;;80:39:80:40:0;:28::57:1;:::70;54:66:83:5;4:0:84:1",
+    "logs": [
+      {
+        "ip": 12,
+        "line": 8,
+        "data": [
+          "still ongoing election"
+        ]
+      },
+      {
+        "ip": 18,
+        "line": 13,
+        "data": [
+          "valid input and output lengths"
+        ]
+      },
+      {
+        "ip": 39,
+        "line": 22,
+        "data": [
+          "valid input[0]"
+        ]
+      },
+      {
+        "ip": 47,
+        "line": 26,
+        "data": [
+          "valid input[1]"
+        ]
+      },
+      {
+        "ip": 53,
+        "line": 30,
+        "data": [
+          "valid output[0]"
+        ]
+      },
+      {
+        "ip": 63,
+        "line": 38,
+        "data": [
+          { "stackIndex": 1, "type": "bytes", "ip": 63 }
+        ]
+      },
+      {
+        "ip": 66,
+        "line": 40,
+        "data": [
+          "voter NFT is valid for voting for this position"
+        ]
+      },
+      {
+        "ip": 111,
+        "line": 61,
+        "data": [
+          "valid input and output lengths"
+        ]
+      },
+      {
+        "ip": 126,
+        "line": 68,
+        "data": [
+          "valid input[0]"
+        ]
+      },
+      {
+        "ip": 130,
+        "line": 72,
+        "data": [
+          "valid output[0]"
+        ]
+      },
+      {
+        "ip": 138,
+        "line": 77,
+        "data": [
+          "valid owner of wallet"
+        ]
+      },
+      {
+        "ip": 147,
+        "line": 82,
+        "data": [
+          "sending candidate NFT to owner of wallet"
+        ]
+      }
+    ],
     "requires": [
-      { "ip": 5, "line": 6 },
-      { "ip": 9, "line": 7 },
-      { "ip": 11, "line": 10 },
-      { "ip": 18, "line": 13 },
-      { "ip": 22, "line": 17 },
-      { "ip": 30, "line": 21 },
-      { "ip": 44, "line": 31 },
-      { "ip": 50, "line": 34 },
-      { "ip": 53, "line": 35 },
-      { "ip": 58, "line": 36 },
-      { "ip": 63, "line": 37 },
-      { "ip": 67, "line": 38 },
-      { "ip": 75, "line": 42 }
-    ]
+      { "ip": 10, "line": 7 },
+      { "ip": 14, "line": 11 },
+      { "ip": 17, "line": 12 },
+      { "ip": 34, "line": 20 },
+      { "ip": 38, "line": 21 },
+      { "ip": 43, "line": 24 },
+      { "ip": 46, "line": 25 },
+      { "ip": 50, "line": 28 },
+      { "ip": 52, "line": 29 },
+      { "ip": 65, "line": 39 },
+      { "ip": 77, "line": 47 },
+      { "ip": 82, "line": 48 },
+      { "ip": 87, "line": 49 },
+      { "ip": 91, "line": 50 },
+      { "ip": 102, "line": 56 },
+      { "ip": 106, "line": 59 },
+      { "ip": 110, "line": 60 },
+      { "ip": 121, "line": 66 },
+      { "ip": 125, "line": 67 },
+      { "ip": 127, "line": 70 },
+      { "ip": 129, "line": 71 },
+      { "ip": 134, "line": 75 },
+      { "ip": 137, "line": 76 },
+      { "ip": 146, "line": 81 }
+    ],
+    "sourceTags": "142:142:sc"
   },
   "compiler": {
     "name": "cashc",
@@ -38,5 +144,5 @@
       "enforceLocktimeGuard": true
     }
   },
-  "updatedAt": "2026-08-01T09:21:48.938Z"
+  "updatedAt": "2026-08-01T15:04:15.935Z"
 }

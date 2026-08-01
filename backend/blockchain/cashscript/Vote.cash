@@ -17,7 +17,7 @@ contract Vote(bytes20 owner, bytes electionCategory, int openTime, int closeTime
         bytes32 input1TokenCategory, bytes input1Capability = tx.inputs[1].tokenCategory.split(32);
         bytes32 outputTokenCategory, bytes outputCapability = tx.outputs[0].tokenCategory.split(32);
 
-        require(input0TokenCategory == electionCategory);
+        require(input0TokenCategory == electionCategory);   
         require(input0Capability == 0x01);
         console.log('valid input[0]');
 
