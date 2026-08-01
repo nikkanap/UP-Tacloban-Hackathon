@@ -37,6 +37,19 @@ export async function generateCandidateNFT(electionNFTCategory, candidateId, pos
   const wallet = await getWalletFromWIF(WALLET_WIF, NETWORK);
   const walletAddress = await wallet.getTokenDepositAddress();
   
+  const utxos = await wallet.getUtxos();
+
+  for (const utxo of utxos) {
+    if (utxo.token) {
+      console.log(
+        "category:", utxo.token.category,
+        "capability:", utxo.token.nft?.capability,
+        "commitment:", utxo.token.nft?.commitment
+      );
+    }
+  }
+
+
   const commitment = Buffer.alloc(24);
   commitment.writeBigUInt64LE(BigInt(candidateId), 0); // candidate
   commitment.writeBigUInt64LE(BigInt(positionId), 8);  // position
@@ -47,13 +60,11 @@ export async function generateCandidateNFT(electionNFTCategory, candidateId, pos
 
   const result = await wallet.tokenMint({
     cashaddr: walletAddress,
-    requests: [
-      {
-        category: electionNFTCategory,
+    category: electionNFTCategory,
+    nft: {
         capability: NFTCapability.mutable,
-        commitment: commitment.toString("hex"),
-      }
-    ]
+        commitment: commitment.toString("hex")
+    }
   });
   console.log(result);
   return result;
@@ -92,16 +103,23 @@ export async function sendNFToContract(electionCategory, candidateId, openTime, 
   const walletAddress = await wallet.getDepositAddress();
   const publicKey = await wallet.getPublicKeyCompressed(); // get compressed version
   
+  console.log('inside send nft to contract');
+  console.log(candidateId);
+  console.log(electionCategory);
+  console.log(openTime);
+  console.log(closeTime);
+
   // find the NFT of the candidate
   const utxos = await wallet.getUtxos();
   const NFT = utxos.find(
     utxo => utxo.token?.category == electionCategory && 
+    utxo.token?.nft?.capability == NFTCapability.mutable &&
     decodeCommitment(utxo.token?.nft?.commitment, 0) == candidateId
   );
   const token = NFT.token;
 
   // creating a new contract instance
-  const contract = new ElectionContract(publicKey, NETWORK, electionCategory, openTime, closeTime);
+  const contract = new ElectionContract(publicKey, NETWORK, electionCategory, BigInt(openTime), BigInt(closeTime));
   const contractUtxos = await contract.getContractUtxos();
   const contractAddress = contract.getContractTokenAddress();
 
@@ -125,7 +143,7 @@ export async function castVote(electionCategory, candidateId, voterId, openTime,
   const publicKey = await wallet.getPublicKeyCompressed(); // get compressed version
 
   // creating a new contract instance
-  const contract = new ElectionContract(publicKey, NETWORK, electionCategory, openTime, closeTime);
+  const contract = new ElectionContract(publicKey, NETWORK, electionCategory, BigInt(openTime), BigInt(closeTime));
   const contractTxId = await contract.castVote(tokenAddress, template, electionCategory, candidateId, voterId);
   return contractTxId;
 }

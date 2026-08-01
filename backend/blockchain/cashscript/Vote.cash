@@ -1,7 +1,7 @@
 pragma cashscript ^0.13.0;
 
 // this contract; commitment = candidateId(8 bytes) + count(8 bytes).
-contract Vote(bytes20 owner, bytes electionCategory, int openTime, int closeTime){
+contract VoteContract(bytes20 owner, bytes electionCategory, int openTime, int closeTime){
     function castVote(){
         // checks if the election has started already
         require(tx.time >= openTime);
@@ -14,9 +14,12 @@ contract Vote(bytes20 owner, bytes electionCategory, int openTime, int closeTime
 
         //input 0 - candidate tally nft (mutable capability - 0x01)
         bytes32 input0TokenCategory, bytes input0Capability = tx.inputs[0].tokenCategory.split(32);
+        
+        console.log(input0TokenCategory);
+        console.log(electionCategory);
         bytes32 input1TokenCategory, bytes input1Capability = tx.inputs[1].tokenCategory.split(32);
         bytes32 outputTokenCategory, bytes outputCapability = tx.outputs[0].tokenCategory.split(32);
-
+        
         require(input0TokenCategory == electionCategory);   
         require(input0Capability == 0x01);
         console.log('valid input[0]');
@@ -34,8 +37,8 @@ contract Vote(bytes20 owner, bytes electionCategory, int openTime, int closeTime
         bytes candidatePositionId, bytes countBytes = remaining.split(8); // also read the position and count
 
         // read voter nft
-        bytes voterId, bytes votingPositionId = tx.inputs[0].nftCommitment.split(8);
-        console.log(voterId); // prevents errors
+        bytes voterId, bytes votingPositionId = tx.inputs[1].nftCommitment.split(8);
+        console.log(voterId);
         require(candidatePositionId == votingPositionId); // check if we're voting for the specific position
         console.log('voter NFT is valid for voting for this position');
 
