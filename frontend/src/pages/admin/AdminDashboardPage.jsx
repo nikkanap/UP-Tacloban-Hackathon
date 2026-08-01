@@ -61,7 +61,7 @@ function AdminDashboardPage() {
           ))}
         </div>
       </div>
-      <div className="flex justify">
+      <div className="flex justify-end">
         <button
           type="button"
           onClick={() => navigate("/admin/elections")}

@@ -194,20 +194,14 @@ function App() {
         </Route>
         <Route element={<DashboardLayout />}>
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-        </Route>
-        <Route element={<DashboardLayout />}>
           <Route
             path="/admin/create-election"
             element={<CreateElectionPage />}
           />
-        </Route>
-        <Route element={<DashboardLayout />}>
           <Route
             path="/admin/register-candidates"
             element={<RegisterCandidatesPage />}
           />
-        </Route>
-        <Route element={<DashboardLayout />}>
           <Route
             path="/admin/register-voters"
             element={<RegisterVotersPage />}

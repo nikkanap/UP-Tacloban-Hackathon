@@ -101,7 +101,7 @@ function CreateElectionPage() {
           <input
             type="checkbox"
             defaultChecked
-            className="w-4 h-4 accent-[var(--color-accent)]"
+            className="w-4 h-4 accent-accent"
           />
           Require one voting credential (NFT) per member
         </label>

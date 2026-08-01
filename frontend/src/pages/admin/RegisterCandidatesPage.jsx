@@ -39,7 +39,7 @@ function RegisterCandidatesPage() {
     event.preventDefault();
     if (!form.name.trim()) return;
     setCandidates([...candidates, { ...form, name: form.name.trim() }]);
-    setForm({ name: "", position: positionsOptios[0], party: "", bio: "" });
+    setForm({ name: "", position: positionsOptions[0], party: "", bio: "" });
   };
 
   const removeCandidate = (index) => {
@@ -65,7 +65,7 @@ function RegisterCandidatesPage() {
 
       <form
         onSubmit={addCandidate}
-        className="flex flex-col gap-5 bg-surface rounded-3x; p-5"
+        className="flex flex-col gap-5 bg-surface rounded-3xl p-5"
       >
         <div className="flex flex-col sm:flex-row gap-5">
           <div className="flex items-center justify-center w-20 h-20 shrink-0 rounded-full border-border bg-background text-muted font-semibold">
