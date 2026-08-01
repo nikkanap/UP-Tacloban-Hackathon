@@ -12,6 +12,7 @@ import { createContext, useState } from "react";
 import defaultCandidateImage from "./assets/images/candidates/default-candidate.png";
 import BallotConfirmationPage from "./pages/BallotConfirmationPage";
 import VerifyVotePage from "./pages/VerifyVotePage";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 
 export const userContext = createContext();
 export const electionDataContext = createContext();
@@ -187,6 +188,9 @@ function App() {
             element={<BallotConfirmationPage />}
           />
           <Route path="verify-vote" element={<VerifyVotePage />} />
+        </Route>
+        <Route element={<DashboardLayout />}>
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
         </Route>
       </Routes>
     </userContext.Provider>
