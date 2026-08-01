@@ -61,7 +61,8 @@ class ElectionContract {
     const voteCount  = candidateCommitment.readBigUInt64LE(16);
 
     // find the voter NFT for that position
-    const walletUtxos = await this.provider.getUtxos(walletAddress);
+    let walletUtxos = await this.provider.getUtxos(walletAddress);
+    walletUtxos = walletUtxos.filter(utxo => utxo?.token != undefined);
     walletUtxos.forEach(u => {
       console.log(
         u.token?.category,
@@ -70,8 +71,9 @@ class ElectionContract {
       );
     });
     
-    const voterNFT = walletUtxos.find(
-      utxo?.token?.category == electionCategory && utxo?.token &&
+    const voterNFT = walletUtxos.find( utxo =>
+      utxo != undefined && utxo?.token != undefined &&  utxo?.token?.category != undefined && 
+      utxo?.token?.category == electionCategory &&
       (utxo?.token?.nft?.commitment).length == 32 &&
       decodeCommitment(utxo?.token?.nft?.commitment, 0) == voterId && 
       decodeCommitment(utxo?.token?.nft?.commitment, 8) == positionId  
@@ -82,11 +84,11 @@ class ElectionContract {
     }
     
     // read the candidate commitment for the count and update it
-    const updatedCount = voteCount + 1;
+    const updatedCount = voteCount + 1n;
     const newCommitment = Buffer.alloc(24);
     newCommitment.writeBigUInt64LE(BigInt(candidateId), 0);   // candidate
-    newCommitment.writeBigUInt64LE(BigInt(positionId), 8);  // position
-    newCommitment.writeBigUInt64LE(BigInt(updatedCount), 16);  // position
+    newCommitment.writeBigUInt64LE(positionId, 8);  // position
+    newCommitment.writeBigUInt64LE(updatedCount, 16);  // position
 
     const tb = new TransactionBuilder({provider: this.provider});
     tb.addInput(candidateNFT, this.contract.unlock.castVote());
