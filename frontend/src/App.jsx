@@ -3,8 +3,9 @@ import { Routes, Route } from "react-router-dom";
 import DashboardLayout from "./layouts/DashboardLayout";
 import AuthLayout from "./layouts/AuthLayout";
 
+import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
-import Page from "./pages/Page";
+import RegisterOrganizationPage from "./pages/RegisterOrganizationPage";
 import ElectionVotingPage from "./pages/ElectionVotingPage";
 import VoterDashboardPage from "./pages/VoterDashboardPage";
 import ElectionDetailsPage from "./pages/ElectionDetailsPage";
@@ -37,7 +38,10 @@ export const userContext = createContext();
 export const electionDataContext = createContext();
 
 function App() {
-  const [fullname] = useState("Juan Dela Cruz");
+  const [userProfile] = useState({
+    fullname: "Juan Dela Cruz",
+    voterId: "2026-00456",
+  });
 
   const electionStartTime = new Date("2026-08-01T08:00:00");
   const electionEndTime = new Date("2026-08-03T17:00:00");
@@ -262,10 +266,12 @@ function App() {
   }));
 
   return (
-    <userContext.Provider value={fullname}>
+    <userContext.Provider value={userProfile}>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register-organization" element={<RegisterOrganizationPage />} />
         </Route>
         <Route
           element={
@@ -276,7 +282,6 @@ function App() {
             </electionDataContext.Provider>
           }
         >
-          <Route path="/" element={<Page />} />
           <Route path="/election-voting" element={<ElectionVotingPage />} />
 
           <Route path="/voter-dashboard" element={<VoterDashboardPage />} />
