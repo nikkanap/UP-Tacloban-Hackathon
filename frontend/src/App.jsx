@@ -14,6 +14,7 @@ import BallotConfirmationPage from "./pages/BallotConfirmationPage";
 import VerifyVotePage from "./pages/VerifyVotePage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import CreateElectionPage from "./pages/admin/CreateElectionPage";
+import RegisterCandidatesPage from "./pages/admin/RegisterCandidatesPage";
 
 export const userContext = createContext();
 export const electionDataContext = createContext();
@@ -197,6 +198,12 @@ function App() {
           <Route
             path="/admin/create-election"
             element={<CreateElectionPage />}
+          />
+        </Route>
+        <Route element={<DashboardLayout />}>
+          <Route
+            path="/admin/register-candidates"
+            element={<RegisterCandidatesPage />}
           />
         </Route>
       </Routes>

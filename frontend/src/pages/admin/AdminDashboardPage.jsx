@@ -14,7 +14,7 @@ function AdminDashboardPage() {
 
   const quickActions = [
     { label: "Create election", path: "/admin/create-election" },
-    { label: "Register Candidates", path: "/admin/register-Candidates" },
+    { label: "Register Candidates", path: "/admin/register-candidates" },
     { label: "Register Voters", path: "/admin/register-voters" },
   ];
 

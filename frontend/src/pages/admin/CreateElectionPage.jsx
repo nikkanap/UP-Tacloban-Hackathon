@@ -39,6 +39,7 @@ function CreateElectionPage() {
         </p>
       </div>
 
+      {/* Credentials and Date */}
       <div className="flex flex-col gap-5 bg-surface rounded-3xl p-5">
         <div className="flex flex-col gap-1.5">
           <label
@@ -106,6 +107,7 @@ function CreateElectionPage() {
         </label>
       </div>
 
+      {/* Positions */}
       <div className="flex flex-col gap-4 bg-surface rounded-3xl p-5">
         <h2>Positions</h2>
 
