@@ -63,6 +63,15 @@ function AllElectionsPage() {
     };
   }, [election, currentStatus, voters.length, votesCast]);
 
+  // Only the current election has live data behind it, so only it is clickable.
+  // Where it goes depends on what stage it's at.
+  const openElection = (entry) => {
+    if (!entry.isCurrent) return;
+    if (entry.status === "draft") navigate("/admin/review");
+    else if (entry.status === "live") navigate("/admin/live-monitoring");
+    else navigate("/admin/results");
+  };
+
   const allElections = [currentElection, ...pastElections];
   const visibleElections =
     activeFilter === "all"
@@ -123,8 +132,10 @@ function AllElectionsPage() {
                 {visibleElections.map((entry) => (
                   <tr
                     key={entry.id}
-                    onClick={() => navigate("/admin/live-monitoring")}
-                    className="border-t border-border cursor-pointer hover:bg-background"
+                    onClick={() => openElection(entry)}
+                    className={`border-t border-border ${
+                      entry.isCurrent ? "cursor-pointer hover:bg-background" : ""
+                    }`}
                   >
                     <td className="py-3 pr-4 font-medium text-foreground">
                       {entry.title}

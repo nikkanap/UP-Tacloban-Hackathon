@@ -55,18 +55,39 @@ function LiveMonitoringPage() {
         <div className="flex flex-col gap-2">
           <h1>Live Monitoring</h1>
           <p className="text-muted max-w-2xl">
-            Voting hasn&rsquo;t started. Lock the election to finalize
-            candidates and voter credentials, then monitoring begins here.
+            This election is still a draft, so there is nothing to monitor yet.
+            Keep setting it up, or review what&rsquo;s registered so far.
           </p>
         </div>
 
-        <div className="flex">
+        <div className="flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => navigate("/admin/review")}
             className="px-5 py-2.5 rounded-lg font-medium bg-accent text-accent-foreground transition hover:opacity-90 active:opacity-80"
           >
-            Go to Review &amp; Lock
+            Review Registered Data
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/admin/create-election")}
+            className="px-5 py-2.5 rounded-lg font-medium border border-border text-foreground transition hover:bg-surface active:opacity-80"
+          >
+            Election Details
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/admin/register-candidates")}
+            className="px-5 py-2.5 rounded-lg font-medium border border-border text-foreground transition hover:bg-surface active:opacity-80"
+          >
+            Candidates
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/admin/register-voters")}
+            className="px-5 py-2.5 rounded-lg font-medium border border-border text-foreground transition hover:bg-surface active:opacity-80"
+          >
+            Voters
           </button>
         </div>
       </div>
