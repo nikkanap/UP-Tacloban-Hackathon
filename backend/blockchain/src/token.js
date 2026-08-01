@@ -1,18 +1,14 @@
 // handles both FTs and NFTs (we can create one category for both FTs/NFTs)
 export async function generateTokenCategory(wallet, amount, nft) {
-  return await wallet.tokenGenesis({
+  const result = await wallet.tokenGenesis({
     ...(amount != null && { amount }),
     ...(nft != null && { nft }),
   });
 
-  /*
-    this is what it's sposed to look like:
-    amount: amount or null,
-    nft: {
-      capability: NFTCapability.mutable/minting/etc.,
-      commitment: Uint8Array.from([0]),
-    } or,
-  */
+  if (!result.categories?.[0]) {
+    throw new Error("Token genesis succeeded but no category was returned");
+  }
+  return result.categories?.[0];
 }
 
 

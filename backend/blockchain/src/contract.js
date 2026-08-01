@@ -1,5 +1,5 @@
 import { Contract, ElectrumNetworkProvider, TransactionBuilder, utils } from "cashscript"
-import contractArtifact from '../../blockchain/cashscript/Vote.json' with { type: "json" };
+import contractArtifact from '../cashscript/Vote.json' with { type: "json" };
 import { ripemd160, sha256 } from "@cashscript/utils";
 
 class ElectionContract {
@@ -9,11 +9,6 @@ class ElectionContract {
     this.electionCategory = electionCategory;
     this.openTime = openTime;
     this.closeTime = closeTime;
-
-    this.initialize()
-  }
-
-  initialize() {
     this.provider = new ElectrumNetworkProvider(this.network)
 
     const ownerPkh = this.getPubKeyHash(this.publicKey);
@@ -27,6 +22,7 @@ class ElectionContract {
 
     this.contract = new Contract(contractArtifact, contractParams, { provider: this.provider })
   }
+
 
   // Get the address of the contract
   getContractTokenAddress() {
@@ -42,7 +38,7 @@ class ElectionContract {
     return ripemd160(sha256(Buffer.from(pubKey, 'hex')))
   }
 
-  async castVote(walletAddress, electionCategory, candidateId, voterId) {
+  async castVote(walletAddress, walletTemplate, electionCategory, candidateId, voterId) {
     // get contract utxos
     const contractUtxos = await this.getContractUtxos();
 
@@ -52,7 +48,7 @@ class ElectionContract {
       decodeCommitment(utxo.token?.nft?.commitment, 0) == candidateId
     );
     if (!candidateNFT) {
-      console.error("Candidate's NFT found inside the contract.");
+      console.error("Candidate NFT not found inside contract.");
       return;
     }
 
@@ -61,15 +57,15 @@ class ElectionContract {
       candidateNFT.token?.nft?.commitment,
       "hex"
     );
-    const positionId = candidateCommitment.readBigUInt64BE(16);
-    const voteCount  = candidateCommitment.readBigUInt64BE(24);
+    const positionId = candidateCommitment.readBigUInt64LE(8);
+    const voteCount  = candidateCommitment.readBigUInt64LE(16);
 
     // find the voter NFT for that position
     const walletUtxos = await this.provider.getUtxos(walletAddress);
     const voterNFT = walletUtxos.find(
       utxo => utxo.token?.category == electionCategory && 
-      decodeCommitment(utxo.token?.nft?.commitment, 8) == voterId && 
-      decodeCommitment(utxo.token?.nft?.commitment, 16) == positionId  
+      decodeCommitment(utxo.token?.nft?.commitment, 0) == voterId && 
+      decodeCommitment(utxo.token?.nft?.commitment, 8) == positionId  
     )
     if (!voterNFT) {
       console.error("No voterNFT inside wallet.");
@@ -77,16 +73,15 @@ class ElectionContract {
     }
     
     // read the candidate commitment for the count and update it
-    const updatedCount = count + BigInt(1);
-    const newCommitment = Buffer.alloc(32);
-    newCommitment.writeBigUInt64LE(candidateIdComm);   // candidate
-    newCommitment.writeBigUInt64LE(candidateIdComm);   // candidate
-    newCommitment.writeBigUInt64LE(positionId);  // position
-    newCommitment.writeBigUInt64LE(updatedCount);  // position
+    const updatedCount = voteCount + BigInt(1);
+    const newCommitment = Buffer.alloc(24);
+    newCommitment.writeBigUInt64LE(BigInt(candidateId), 0);   // candidate
+    newCommitment.writeBigUInt64LE(positionId, 8);  // position
+    newCommitment.writeBigUInt64LE(updatedCount, 16);  // position
 
     const tb = new TransactionBuilder({provider: this.provider});
-    tb.addInput(candidateNFT, this.contract.unlock.payloan(payAmount));
-    tb.addInput(voterNFT, borrowerTemplate.unlockP2PKH());
+    tb.addInput(candidateNFT, this.contract.unlock.castVote());
+    tb.addInput(voterNFT, walletTemplate.unlockP2PKH());
     tb.addOutput(
       {  
         to: this.getContractTokenAddress(),
