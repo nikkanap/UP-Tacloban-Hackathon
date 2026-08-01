@@ -26,6 +26,58 @@
     }
 }
 
+/* :root {
+    --color-background: #f5f3ff;
+    --color-surface: #ffffff;
+    --color-border: #ddd6fe;
+    --color-foreground: #1e1b4b;
+    --color-muted: #6b7280;
+
+    --color-accent: #4f46e5;
+    --color-accent-foreground: #ffffff;
+
+    --safe-width: 1400px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-background: #17133a;
+        --color-surface: #25204d;
+        --color-border: #403878;
+        --color-foreground: #f5f3ff;
+        --color-muted: #a5b4fc;
+
+        --color-accent: #818cf8;
+        --color-accent-foreground: #1e1b4b;
+    }
+} */
+
+/* :root {
+    --color-background: #f3f3e7;
+    --color-surface: #ffffff;
+    --color-border: #e7e5e4;
+    --color-foreground: #292524;
+    --color-muted: #78716c;
+
+    --color-accent: #d97706;
+    --color-accent-foreground: #ffffff;
+
+    --safe-width: 1400px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-background: #1c1917;
+        --color-surface: #292524;
+        --color-border: #44403c;
+        --color-foreground: #fafaf9;
+        --color-muted: #a8a29e;
+
+        --color-accent: #f59e0b;
+        --color-accent-foreground: #1c1917;
+    }
+} */
+
 @theme inline {
     --color-background: var(--color-background);
     --color-surface: var(--color-surface);

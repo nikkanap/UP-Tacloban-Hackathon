@@ -15,6 +15,8 @@ function VotingPanel({
 
     return (
         <div className="flex flex-col gap-5 bg-surface p-5 rounded-3xl shadow-lg">
+            <h2 className="text-center">Cast Your Vote</h2>
+
             <PositionTabs
                 positions={electionCandidates.map((position) => position.position)}
                 activeIndex={activePosition}
@@ -31,18 +33,18 @@ function VotingPanel({
 
             <p className="text-sm text-muted -mt-3">
                 Select up to {currentPosition?.maxVotes} candidate{currentPosition?.maxVotes > 1 ? "s" : ""} ·{" "}
-                {(selections[currentPosition?.position]?.filter((name) => name !== "Abstain").length ?? 0)} / {currentPosition?.maxVotes} selected
+                {(selections[currentPosition?.position]?.filter((id) => id !== "Abstain").length ?? 0)} / {currentPosition?.maxVotes} selected
             </p>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 justify-center">
                 {currentPosition?.candidates.map((candidate) => (
                     <CandidateCard
-                        key={candidate.name}
+                        key={candidate.id}
                         name={candidate.name}
                         party={candidate.party}
                         image={candidate.image}
-                        selected={selections[currentPosition.position]?.includes(candidate.name) ?? false}
-                        onClick={() => toggleCandidate(currentPosition, candidate.name)}
+                        selected={selections[currentPosition.position]?.includes(candidate.id) ?? false}
+                        onClick={() => toggleCandidate(currentPosition, candidate.id)}
                     />
                 ))}
                 <CandidateCard
