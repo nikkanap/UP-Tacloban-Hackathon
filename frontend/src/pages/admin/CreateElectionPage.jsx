@@ -1,28 +1,26 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import LockedNotice from "../../components/LockedNotice";
+import { useAdminElection } from "../../context/AdminElectionContext";
 
 const inputClass =
   "border border-border bg-background text-foreground p-2.5 rounded-lg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20";
 
 function CreateElectionPage() {
   const navigate = useNavigate();
+  const { election, updateElection, addPosition, removePosition, locked } =
+    useAdminElection();
 
-  const [positions, setPositions] = useState([{ name: "President", seats: 1 }]);
   const [positionName, setPositionName] = useState("");
   const [positionSeats, setPositionSeats] = useState(1);
 
-  const addPosition = () => {
+  if (locked) return <LockedNotice />;
+
+  const handleAddPosition = () => {
     if (!positionName.trim()) return;
-    setPositions([
-      ...positions,
-      { name: positionName.trim(), seats: Number(positionSeats) || 1 },
-    ]);
+    addPosition(positionName.trim(), Number(positionSeats) || 1);
     setPositionName("");
     setPositionSeats(1);
-  };
-
-  const removePosition = (index) => {
-    setPositions(positions.filter((_, i) => i !== index));
   };
 
   const handleSubmit = (event) => {
@@ -39,7 +37,6 @@ function CreateElectionPage() {
         </p>
       </div>
 
-      {/* Credentials and Date */}
       <div className="flex flex-col gap-5 bg-surface rounded-3xl p-5">
         <div className="flex flex-col gap-1.5">
           <label
@@ -51,6 +48,8 @@ function CreateElectionPage() {
           <input
             id="title"
             type="text"
+            value={election.title}
+            onChange={(event) => updateElection({ title: event.target.value })}
             placeholder="Student Government Election"
             className={inputClass}
           />
@@ -66,6 +65,10 @@ function CreateElectionPage() {
           <textarea
             id="description"
             rows={3}
+            value={election.description}
+            onChange={(event) =>
+              updateElection({ description: event.target.value })
+            }
             placeholder="Describe what members are voting on"
             className={`${inputClass} resize-y`}
           />
@@ -82,6 +85,10 @@ function CreateElectionPage() {
             <input
               id="startTime"
               type="datetime-local"
+              value={election.startTime}
+              onChange={(event) =>
+                updateElection({ startTime: event.target.value })
+              }
               className={inputClass}
             />
           </div>
@@ -93,21 +100,31 @@ function CreateElectionPage() {
             >
               Closes
             </label>
-            <input id="endTime" type="datetime-local" className={inputClass} />
+            <input
+              id="endTime"
+              type="datetime-local"
+              value={election.endTime}
+              onChange={(event) =>
+                updateElection({ endTime: event.target.value })
+              }
+              className={inputClass}
+            />
           </div>
         </div>
 
         <label className="flex items-center gap-2.5 text-sm text-foreground">
           <input
             type="checkbox"
-            defaultChecked
-            className="w-4 h-4 accent-accent"
+            checked={election.requireCredential}
+            onChange={(event) =>
+              updateElection({ requireCredential: event.target.checked })
+            }
+            className="w-4 h-4 accent-[var(--color-accent)]"
           />
           Require one voting credential (NFT) per member
         </label>
       </div>
 
-      {/* Positions */}
       <div className="flex flex-col gap-4 bg-surface rounded-3xl p-5">
         <h2>Positions</h2>
 
@@ -129,20 +146,20 @@ function CreateElectionPage() {
           />
           <button
             type="button"
-            onClick={addPosition}
+            onClick={handleAddPosition}
             className="px-4 py-2.5 rounded-lg font-medium border border-border text-foreground transition hover:bg-background active:opacity-80"
           >
             + Add
           </button>
         </div>
 
-        {positions.length === 0 ? (
+        {election.positions.length === 0 ? (
           <p className="text-sm text-muted">No positions added yet.</p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {positions.map((position, index) => (
+            {election.positions.map((position) => (
               <li
-                key={`${position.name}-${index}`}
+                key={position.id}
                 className="flex items-center justify-between gap-3 bg-background rounded-xl px-4 py-3"
               >
                 <span className="font-medium text-foreground">
@@ -154,7 +171,7 @@ function CreateElectionPage() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => removePosition(index)}
+                    onClick={() => removePosition(position.id)}
                     className="text-sm text-muted transition hover:text-foreground"
                   >
                     Remove

@@ -1,49 +1,40 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import LockedNotice from "../../components/LockedNotice";
+import { useAdminElection } from "../../context/AdminElectionContext";
 
 const inputClass =
   "border border-border bg-background text-foreground p-2.5 rounded-lg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20";
 
-const positionOptions = [
-  "President",
-  "Vice President",
-  "Secretary",
-  "Treasurer",
-  "Councilor",
-];
-
 function RegisterCandidatesPage() {
   const navigate = useNavigate();
+  const { election, candidates, addCandidate, removeCandidate, locked } =
+    useAdminElection();
 
-  const [candidates, setCandidates] = useState([
-    {
-      name: "Geoffrey Tomagan",
-      position: "President",
-      party: "Party A",
-    },
-    { name: "Daniel Cho", position: "President", party: "Party B" },
-  ]);
+  const positionOptions = election.positions.map((position) => position.name);
 
   const [form, setForm] = useState({
     name: "",
-    position: positionOptions[0],
+    position: positionOptions[0] ?? "",
     party: "",
     bio: "",
   });
 
-  const updateField = (field) => (event) => {
-    setForm({ ...form, [field]: event.target.value });
-  };
+  if (locked) return <LockedNotice />;
 
-  const addCandidate = (event) => {
+  const updateField = (field) => (event) =>
+    setForm({ ...form, [field]: event.target.value });
+
+  const handleAddCandidate = (event) => {
     event.preventDefault();
     if (!form.name.trim()) return;
-    setCandidates([...candidates, { ...form, name: form.name.trim() }]);
-    setForm({ name: "", position: positionsOptions[0], party: "", bio: "" });
-  };
-
-  const removeCandidate = (index) => {
-    setCandidates(candidates.filter((_, i) => i !== index));
+    addCandidate({ ...form, name: form.name.trim() });
+    setForm({
+      name: "",
+      position: positionOptions[0] ?? "",
+      party: "",
+      bio: "",
+    });
   };
 
   const getInitials = (name) =>
@@ -59,20 +50,19 @@ function RegisterCandidatesPage() {
       <div className="flex flex-col gap-2">
         <h1>Register Candidates</h1>
         <p className="text-muted max-w-2xl">
-          Add each candidate running for a position on the ballot
+          Add each candidate running for a position on the ballot.
         </p>
       </div>
 
       <form
-        onSubmit={addCandidate}
+        onSubmit={handleAddCandidate}
         className="flex flex-col gap-5 bg-surface rounded-3xl p-5"
       >
         <div className="flex flex-col sm:flex-row gap-5">
-          <div className="flex items-center justify-center w-20 h-20 shrink-0 rounded-full border-border bg-background text-muted font-semibold">
+          <div className="flex items-center justify-center w-20 h-20 shrink-0 rounded-full border border-border bg-background text-muted font-semibold">
             {form.name ? getInitials(form.name) : "?"}
           </div>
 
-          {/* Candidate name and position */}
           <div className="flex-1 flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label
@@ -114,7 +104,6 @@ function RegisterCandidatesPage() {
           </div>
         </div>
 
-        {/* Party/Affiliation */}
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="candidateParty"
@@ -133,7 +122,6 @@ function RegisterCandidatesPage() {
           />
         </div>
 
-        {/* Short Bio / Platform */}
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="candidateBio"
@@ -151,7 +139,6 @@ function RegisterCandidatesPage() {
           />
         </div>
 
-        {/* Add Candidate  */}
         <div className="flex justify-start">
           <button
             type="submit"
@@ -162,7 +149,6 @@ function RegisterCandidatesPage() {
         </div>
       </form>
 
-      {/* Registered Candidates */}
       <div className="flex flex-col gap-4 bg-surface rounded-3xl p-5">
         <h2>Registered so far ({candidates.length})</h2>
 
@@ -170,9 +156,9 @@ function RegisterCandidatesPage() {
           <p className="text-sm text-muted">No candidates registered yet.</p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {candidates.map((candidate, index) => (
+            {candidates.map((candidate) => (
               <li
-                key={`${candidate.name}-${index}`}
+                key={candidate.id}
                 className="flex items-center gap-3 bg-background rounded-xl px-4 py-3"
               >
                 <span className="flex items-center justify-center w-9 h-9 shrink-0 rounded-full bg-accent text-accent-foreground text-sm font-semibold">
@@ -189,7 +175,7 @@ function RegisterCandidatesPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => removeCandidate(index)}
+                  onClick={() => removeCandidate(candidate.id)}
                   className="text-sm text-muted transition hover:text-foreground"
                 >
                   Remove
@@ -200,7 +186,6 @@ function RegisterCandidatesPage() {
         )}
       </div>
 
-      {/* Continue Button */}
       <div className="flex justify-end">
         <button
           type="button"
