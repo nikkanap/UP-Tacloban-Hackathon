@@ -1,0 +1,45 @@
+pragma cashscript ^0.13.0;
+
+// this contract; commitment = candidateId(4 bytes) + count(8 bytes).
+contract Vote(bytes electionCategory, int openTime){
+    function castVote(){
+        require(tx.inputs.length >= 2);
+        require(tx.inputs.length <= 3);
+
+        // checks if the election has started already
+        require(tx.time >= openTime);
+
+        //input 0 - candidate tally nft (mutable capability - 0x01)
+        require(tx.inputs[0].tokenCategory == electionCategory + 0x01);
+
+        //input 1 - voters credential nft immutable (no capability byte)
+        //destroyed here to prevent double-voting
+        require(tx.inputs[1].tokenCategory == electionCategory);
+
+        if(tx.inputs.length == 3){
+            //if third input exist it should only be bch, not nft
+            require(tx.inputs[2].tokenCategory == 0x);
+        }
+
+        //read candidate nft
+        bytes candidateId, bytes countBytes = tx.inputs[0].nftCommitment.split(8);
+        int newCount = int(countBytes) + 1;
+        bytes newCommitment = candidateId + toPaddedBytes(newCount, 8); // Candidate ID stays exactly the same.
+
+        //burn the voting nft, the nft credential from the voters appears only as input, 
+        //it is never created in any output
+        require(tx.outputs.length <= 2);       
+        
+        // validate output tally nft
+        require(tx.outputs[0].tokenCategory == electionCategory + 0x01);
+        require(tx.outputs[0].nftCommitment == newCommitment);
+        require(tx.outputs[0].lockingBytecode == tx.inputs[0].lockingBytecode);
+        require(tx.outputs[0].value == tx.inputs[0].value);
+        require(tx.outputs[0].tokenAmount == 0);
+
+        // make sure that the 2nd output is only a bch utxo if available, not the token
+        if(tx.outputs.length == 2){
+            require(tx.outputs[1].tokenCategory == 0x);
+        }
+    }
+}

@@ -1,0 +1,42 @@
+{
+  "contractName": "Vote",
+  "constructorInputs": [
+    { "name": "electionCategory", "type": "bytes" },
+    { "name": "openTime", "type": "int" }
+  ],
+  "abi": [
+    { "name": "castVote", "inputs": [] }
+  ],
+  "bytecode": "OP_SWAP OP_CHECKLOCKTIMEVERIFY OP_DROP OP_0 OP_UTXOTOKENCATEGORY OP_OVER OP_1 OP_CAT OP_EQUALVERIFY OP_1 OP_UTXOTOKENCATEGORY OP_OVER OP_EQUALVERIFY OP_TXINPUTCOUNT OP_2 OP_GREATERTHANOREQUAL OP_VERIFY OP_TXINPUTCOUNT OP_3 OP_LESSTHANOREQUAL OP_VERIFY OP_TXINPUTCOUNT OP_3 OP_NUMEQUAL OP_IF OP_2 OP_UTXOTOKENCATEGORY OP_0 OP_EQUALVERIFY OP_ENDIF OP_0 OP_UTXOTOKENCOMMITMENT OP_4 OP_SPLIT OP_BIN2NUM OP_1ADD OP_8 OP_NUM2BIN OP_CAT OP_TXOUTPUTCOUNT OP_2 OP_LESSTHANOREQUAL OP_VERIFY OP_0 OP_OUTPUTTOKENCATEGORY OP_ROT OP_1 OP_CAT OP_EQUALVERIFY OP_0 OP_OUTPUTTOKENCOMMITMENT OP_EQUALVERIFY OP_0 OP_OUTPUTBYTECODE OP_0 OP_UTXOBYTECODE OP_EQUALVERIFY OP_0 OP_OUTPUTVALUE OP_0 OP_UTXOVALUE OP_NUMEQUALVERIFY OP_0 OP_OUTPUTTOKENAMOUNT OP_0 OP_NUMEQUALVERIFY OP_TXOUTPUTCOUNT OP_2 OP_NUMEQUAL OP_IF OP_1 OP_OUTPUTTOKENCATEGORY OP_0 OP_EQUALVERIFY OP_ENDIF OP_1",
+  "source": "pragma cashscript ^0.13.0;\r\n\r\n// this contract; commitment = candidateId(4 bytes) + count(8 bytes).\r\ncontract Vote(bytes electionCategory, int openTime){\r\n    function castVote(){\r\n        // checks if the election has started already\r\n        require(tx.time >= openTime);\r\n\r\n        //input 0 - candidate tally nft (mutable capability - 0x01)\r\n        require(tx.inputs[0].tokenCategory == electionCategory + 0x01);\r\n\r\n        //input 1 - voters credential nft immutable (no capability byte)\r\n        //destroyed here to prevent double-voting\r\n        require(tx.inputs[1].tokenCategory == electionCategory);\r\n\r\n\r\n        require(tx.inputs.length >= 2);\r\n        require(tx.inputs.length <= 3);\r\n        if(tx.inputs.length == 3){\r\n            //if third input exist it should only be bch, not nft\r\n            require(tx.inputs[2].tokenCategory == 0x);\r\n        }\r\n\r\n        //read candidate nft\r\n        bytes candidateId, bytes countBytes = tx.inputs[0].nftCommitment.split(4);\r\n        int newCount = int(countBytes) + 1;\r\n        bytes newCommitment = candidateId + toPaddedBytes(newCount, 8); // Candidate ID stays exactly the same.\r\n\r\n\r\n        //burn the voting nft, the nft credential from the voters appears only as input, \r\n        //it is never created in any output\r\n        require(tx.outputs.length <= 2);       \r\n        \r\n        // validate output tally nft\r\n        require(tx.outputs[0].tokenCategory == electionCategory + 0x01);\r\n        require(tx.outputs[0].nftCommitment == newCommitment);\r\n        require(tx.outputs[0].lockingBytecode == tx.inputs[0].lockingBytecode);\r\n        require(tx.outputs[0].value == tx.inputs[0].value);\r\n        require(tx.outputs[0].tokenAmount == 0);\r\n\r\n        if(tx.outputs.length == 2){\r\n            require(tx.outputs[1].tokenCategory == 0x);\r\n        }\r\n    }\r\n}",
+  "fingerprint": "cb06df08158e67250a2e782babb1c7c920f6f8350461b79d2794923958906041",
+  "debug": {
+    "bytecode": "7cb17500ce78517e8851ce7888c352a269c353a169c3539c6352ce00886800cf547f818b58807ec452a16900d17b517e8800d28800cd00c78800cc00c69d00d3009dc4529c6351d100886851",
+    "sourceMap": "7:27:7:35;:8::37:1;;10:26:10:27:0;:16::42:1;:46::62:0;:65::69;:46:::1;:8::71;14:26:14:27:0;:16::42:1;:46::62:0;:8::64:1;17:16:17:32:0;:36::37;:16:::1;:8::39;18:16:18:32:0;:36::37;:16:::1;:8::39;19:11:19:27:0;:31::32;:11:::1;:33:22:9:0;21:30:21:31;:20::46:1;:50::52:0;:12::54:1;19:33:22:9;25:56:25:57:0;:46::72:1;:79::80:0;:46::81:1;26:23:26:38;:::42;27:68:27:69:0;:44::70:1;:30;32:16:32:33:0;:37::38;:16:::1;:8::40;35:27:35:28:0;:16::43:1;:47::63:0;:66::70;:47:::1;:8::72;36:27:36:28:0;:16::43:1;:8::62;37:27:37:28:0;:16::45:1;:59::60:0;:49::77:1;:8::79;38:27:38:28:0;:16::35:1;:49::50:0;:39::57:1;:8::59;39:27:39:28:0;:16::41:1;:45::46:0;:8::48:1;41:11:41:28:0;:32::33;:11:::1;:34:43:9:0;42:31:42:32;:20::47:1;:51::53:0;:12::55:1;41:34:43:9;5:23:44:5",
+    "logs": [],
+    "requires": [
+      { "ip": 3, "line": 7 },
+      { "ip": 10, "line": 10 },
+      { "ip": 14, "line": 14 },
+      { "ip": 18, "line": 17 },
+      { "ip": 22, "line": 18 },
+      { "ip": 30, "line": 21 },
+      { "ip": 44, "line": 32 },
+      { "ip": 50, "line": 35 },
+      { "ip": 53, "line": 36 },
+      { "ip": 58, "line": 37 },
+      { "ip": 63, "line": 38 },
+      { "ip": 67, "line": 39 },
+      { "ip": 75, "line": 42 }
+    ]
+  },
+  "compiler": {
+    "name": "cashc",
+    "version": "0.13.2",
+    "options": {
+      "enforceFunctionParameterTypes": true,
+      "enforceLocktimeGuard": true
+    }
+  },
+  "updatedAt": "2026-08-01T07:05:08.865Z"
+}
