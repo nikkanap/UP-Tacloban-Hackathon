@@ -21,11 +21,11 @@ function VotingPanel({
                 positions={electionCandidates.map((position) => position.position)}
                 activeIndex={activePosition}
                 onSelect={setActivePosition}
-                completed={electionCandidates.map((position) => (selections[position.position]?.length ?? 0) > 0)}
+                voteCounts={electionCandidates.map((position) => selections[position.position]?.length ?? 0)}
             />
 
             <div className="flex items-baseline justify-between">
-                <h2>{currentPosition?.position}</h2>
+                <h2 className="text-lg">{currentPosition?.position}</h2>
                 <span className="text-sm text-muted">
                     Position {activePosition + 1} of {electionCandidates.length}
                 </span>
@@ -33,7 +33,7 @@ function VotingPanel({
 
             <p className="text-sm text-muted -mt-3">
                 Select up to {currentPosition?.maxVotes} candidate{currentPosition?.maxVotes > 1 ? "s" : ""} ·{" "}
-                {(selections[currentPosition?.position]?.filter((id) => id !== "Abstain").length ?? 0)} / {currentPosition?.maxVotes} selected
+                {selections[currentPosition?.position]?.length ?? 0} / {currentPosition?.maxVotes} selected · leave empty to abstain
             </p>
 
             <div className="flex flex-wrap gap-4 justify-center">
@@ -47,11 +47,6 @@ function VotingPanel({
                         onClick={() => toggleCandidate(currentPosition, candidate.id)}
                     />
                 ))}
-                <CandidateCard
-                    name="Abstain"
-                    selected={selections[currentPosition?.position]?.includes("Abstain") ?? false}
-                    onClick={() => toggleCandidate(currentPosition, "Abstain")}
-                />
             </div>
 
             <div className="flex justify-end gap-3 pt-2 border-t border-border">

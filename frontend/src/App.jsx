@@ -8,6 +8,7 @@ import Page from "./pages/Page";
 import ElectionVotingPage from "./pages/ElectionVotingPage";
 import VoterDashboardPage from "./pages/VoterDashboardPage";
 import ElectionDetailsPage from "./pages/ElectionDetailsPage";
+import ElectionResultsPage from "./pages/ElectionResultsPage";
 import { createContext, useState } from "react";
 import randomPerson1 from "./assets/images/candidates/random-person.jpeg";
 import randomPerson2 from "./assets/images/candidates/random-person (1).jpeg";
@@ -281,6 +282,7 @@ function App() {
           <Route path="/voter-dashboard" element={<VoterDashboardPage />} />
 
           <Route path="/election-details" element={<ElectionDetailsPage />} />
+          <Route path="/election-results" element={<ElectionResultsPage />} />
           <Route
             path="/ballot-confirmation"
             element={<BallotConfirmationPage />}

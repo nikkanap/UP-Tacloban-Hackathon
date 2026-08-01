@@ -1,9 +1,10 @@
 import { useContext } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { electionDataContext } from "../App";
 
 function VerifyVotePage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { electionData } = useContext(electionDataContext);
 
   const ballotId = location.state?.ballotId ?? "75-3134-123";
@@ -72,10 +73,18 @@ function VerifyVotePage() {
             href={explorerUrl}
             target="_blank"
             rel="noreferrer"
-            className="mt-2 px-5 py-2.5 rounded-lg font-medium bg-accent text-accent-foreground transition hover:opacity-90 active:opacity-80"
+            className="mt-2 w-full text-center px-5 py-2.5 rounded-lg font-medium bg-accent text-accent-foreground transition hover:opacity-90 active:opacity-80"
           >
             View on Public Ledger →
           </a>
+
+          <button
+            type="button"
+            onClick={() => navigate("/election-details")}
+            className="w-full px-5 py-2.5 rounded-lg font-medium text-foreground border border-border transition hover:bg-background"
+          >
+            ← Back to Election Details
+          </button>
         </div>
       </div>
     </div>

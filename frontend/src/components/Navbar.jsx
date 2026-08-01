@@ -1,3 +1,5 @@
+import logo from "../assets/logo/logo.svg";
+
 function Navbar() {
     const fullname = "Juan Dela Cruz";
 
@@ -9,7 +11,23 @@ function Navbar() {
     return (
         <nav className="navbar flex justify-center bg-background border-b border-border">
             <div className="flex justify-between items-center w-full max-w-[var(--safe-width)] p-3">
-                <h2 className="text-foreground font-semibold tracking-wide">SmartElect</h2>
+                <div className="flex items-center gap-2">
+                    <span
+                        aria-hidden="true"
+                        className="w-10 h-10 bg-accent shrink-0"
+                        style={{
+                            WebkitMaskImage: `url(${logo})`,
+                            maskImage: `url(${logo})`,
+                            WebkitMaskSize: "contain",
+                            maskSize: "contain",
+                            WebkitMaskRepeat: "no-repeat",
+                            maskRepeat: "no-repeat",
+                            WebkitMaskPosition: "center",
+                            maskPosition: "center",
+                        }}
+                    />
+                    <h2 className="text-foreground font-semibold tracking-wide">SmartElect</h2>
+                </div>
 
                 <button className="flex items-center gap-3 text-foreground font-medium rounded-lg px-2 py-1.5 transition hover:bg-surface">
                     <span className="flex items-center justify-center bg-accent text-accent-foreground text-sm font-semibold h-9 w-9 rounded-full">

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { electionDataContext } from "../App";
 import ProgressBar from "../components/ProgressBar";
 import CurrentPollsPanel from "../components/CurrentPollsPanel";
+import WinnersPanel from "../components/WinnersPanel";
 import StatusBadge from "../components/StatusBadge";
 import useCountdown from "../hooks/useCountdown";
 
@@ -10,12 +11,28 @@ function ElectionDetailsPage(){
     const navigate = useNavigate();
     const { electionData, electionCandidates, electionResults } = useContext(electionDataContext);
     const timeLeft = useCountdown(electionData.endTime);
+    const isUpcoming = electionData.status === "upcoming";
+    const isOngoing = electionData.status === "ongoing";
+    const isCompleted = electionData.status === "completed";
 
     const totalPositions = electionCandidates.length;
     const totalCandidates = electionCandidates.reduce(
         (sum, position) => sum + position.candidates.length,
         0
     );
+
+    const positionsWithWinners = electionResults.map((result) => {
+        const maxVotes =
+            electionCandidates.find((position) => position.position === result.position)?.maxVotes ?? 1;
+        const sortedCandidates = [...result.candidates].sort((a, b) => b.votes - a.votes);
+        const totalVotes = sortedCandidates.reduce((sum, candidate) => sum + candidate.votes, 0) + result.abstained;
+
+        return {
+            position: result.position,
+            totalVotes,
+            winners: isCompleted ? sortedCandidates.slice(0, Math.min(maxVotes, sortedCandidates.length)) : [],
+        };
+    });
 
     const formatDateTime = (date) =>
         date.toLocaleString("en-US", {
@@ -40,10 +57,10 @@ function ElectionDetailsPage(){
                 <button
                     type="button"
                     onClick={() => navigate("/election-voting")}
-                    disabled={timeLeft.totalMs === 0}
+                    disabled={!isOngoing}
                     className="shrink-0 px-12 py-4 rounded-xl font-semibold text-lg bg-accent text-accent-foreground shadow-lg transition hover:opacity-90 active:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                    {timeLeft.totalMs === 0 ? "Voting Closed" : "Vote Now"}
+                    {isCompleted ? "Voting Closed" : isUpcoming ? "Voting Not Yet Open" : "Vote Now"}
                 </button>
             </div>
 
@@ -52,7 +69,10 @@ function ElectionDetailsPage(){
                     { label: "Positions", value: totalPositions },
                     { label: "Candidates", value: totalCandidates },
                     { label: "Total Voters", value: electionData.totalVoters.toLocaleString() },
-                    { label: "Votes Cast", value: electionData.totalVotersVoted.toLocaleString() },
+                    {
+                        label: isCompleted ? "Votes Were Cast" : "Votes Cast",
+                        value: electionData.totalVotersVoted.toLocaleString(),
+                    },
                 ].map(({ label, value }) => (
                     <div key={label} className="flex flex-col gap-1 bg-surface rounded-2xl p-4">
                         <span className="text-2xl font-bold text-foreground">{value}</span>
@@ -61,21 +81,21 @@ function ElectionDetailsPage(){
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="flex flex-col gap-4 md:col-span-2">
-                    <div className="flex flex-col gap-4 bg-surface rounded-3xl p-5">
-                        <h2>Schedule</h2>
-                        <div className="flex flex-col gap-3">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted">Opens</span>
-                                <span className="font-medium text-foreground">{formatDateTime(electionData.startTime)}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted">Closes</span>
-                                <span className="font-medium text-foreground">{formatDateTime(electionData.endTime)}</span>
-                            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-4 bg-surface rounded-3xl p-5">
+                    <h2>Schedule</h2>
+                    <div className="flex flex-col gap-3">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-muted">Opens</span>
+                            <span className="font-medium text-foreground">{formatDateTime(electionData.startTime)}</span>
                         </div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-muted">Closes</span>
+                            <span className="font-medium text-foreground">{formatDateTime(electionData.endTime)}</span>
+                        </div>
+                    </div>
 
+                    {isOngoing ? (
                         <div className="flex gap-2">
                             {[
                                 { label: "days", value: timeLeft.days },
@@ -90,31 +110,40 @@ function ElectionDetailsPage(){
                                 </div>
                             ))}
                         </div>
-
-                        {timeLeft.totalMs === 0 && (
-                            <span className="text-sm font-medium text-foreground">Voting has closed</span>
-                        )}
-                    </div>
-
-                    <div className="flex flex-col gap-4 bg-surface rounded-3xl p-5">
-                        <h2>Turnout</h2>
-                        <ProgressBar value={electionData.totalVotersVoted} total={electionData.totalVoters} />
-
-                        <h2 className="mt-2">Positions up for vote</h2>
-                        <ul className="flex flex-wrap gap-2">
-                            {electionCandidates.map((position) => (
-                                <li
-                                    key={position.position}
-                                    className="text-sm font-medium text-foreground bg-background px-3 py-1.5 rounded-full"
-                                >
-                                    {position.position}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                    ) : (
+                        <span className="text-sm font-medium text-foreground">
+                            {isUpcoming
+                                ? `Voting opens ${formatDateTime(electionData.startTime)}`
+                                : "Voting has closed"}
+                        </span>
+                    )}
                 </div>
 
-                <CurrentPollsPanel electionResults={electionResults} />
+                <div className="flex flex-col gap-4 bg-surface rounded-3xl p-5">
+                    <h2>Turnout</h2>
+                    <ProgressBar value={electionData.totalVotersVoted} total={electionData.totalVoters} />
+
+                    <h2 className="mt-2">{isCompleted ? "Positions contested" : "Positions up for vote"}</h2>
+                    <ul className="flex flex-wrap gap-2">
+                        {electionCandidates.map((position) => (
+                            <li
+                                key={position.position}
+                                className="text-sm font-medium text-foreground bg-background px-3 py-1.5 rounded-full"
+                            >
+                                {position.position}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+                <WinnersPanel positions={positionsWithWinners} isCompleted={isCompleted} />
+
+                <CurrentPollsPanel
+                    electionResults={electionResults}
+                    title={isCompleted ? "Final Poll Tally" : "Current Poll Tally"}
+                />
             </div>
         </div>
     )

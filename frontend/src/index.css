@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-:root {
+/* Palette 1: Monochrome — neutral baseline, no color statement */
+/* :root {
     --color-background: #f0f0f0;
     --color-surface: #ffffff;
     --color-border: #d4d4d8;
@@ -24,16 +25,17 @@
         --color-accent: #fafafa;
         --color-accent-foreground: #18181b;
     }
-}
+} */
 
+/* Palette 2: Civic Blue — classic ballot blue */
 /* :root {
-    --color-background: #f5f3ff;
+    --color-background: #f0f4f9;
     --color-surface: #ffffff;
-    --color-border: #ddd6fe;
-    --color-foreground: #1e1b4b;
-    --color-muted: #6b7280;
+    --color-border: #cddaeb;
+    --color-foreground: #14213d;
+    --color-muted: #64748b;
 
-    --color-accent: #4f46e5;
+    --color-accent: #1d4ed8;
     --color-accent-foreground: #ffffff;
 
     --safe-width: 1400px;
@@ -41,25 +43,26 @@
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --color-background: #17133a;
-        --color-surface: #25204d;
-        --color-border: #403878;
-        --color-foreground: #f5f3ff;
-        --color-muted: #a5b4fc;
+        --color-background: #0f1729;
+        --color-surface: #17233d;
+        --color-border: #2c3b5e;
+        --color-foreground: #eef2fb;
+        --color-muted: #9db2d4;
 
-        --color-accent: #818cf8;
-        --color-accent-foreground: #1e1b4b;
+        --color-accent: #60a5fa;
+        --color-accent-foreground: #0f1729;
     }
 } */
 
+/* Palette 3: Civic Red — classic ballot red */
 /* :root {
-    --color-background: #f3f3e7;
+    --color-background: #fbf2f2;
     --color-surface: #ffffff;
-    --color-border: #e7e5e4;
-    --color-foreground: #292524;
-    --color-muted: #78716c;
+    --color-border: #f0d3d3;
+    --color-foreground: #3a1212;
+    --color-muted: #8a6a6a;
 
-    --color-accent: #d97706;
+    --color-accent: #b91c1c;
     --color-accent-foreground: #ffffff;
 
     --safe-width: 1400px;
@@ -67,14 +70,176 @@
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --color-background: #1c1917;
-        --color-surface: #292524;
-        --color-border: #44403c;
-        --color-foreground: #fafaf9;
-        --color-muted: #a8a29e;
+        --color-background: #200e0e;
+        --color-surface: #2d1414;
+        --color-border: #4d2323;
+        --color-foreground: #fdecec;
+        --color-muted: #d19b9b;
 
-        --color-accent: #f59e0b;
-        --color-accent-foreground: #1c1917;
+        --color-accent: #f87171;
+        --color-accent-foreground: #200e0e;
+    }
+} */
+
+/* Palette 4: Civic Yellow — classic ballot yellow */
+/* :root {
+    --color-background: #fbf9f0;
+    --color-surface: #ffffff;
+    --color-border: #ede2b8;
+    --color-foreground: #332b0e;
+    --color-muted: #8a7e57;
+
+    --color-accent: #facc15;
+    --color-accent-foreground: #ffffff;
+
+    --safe-width: 1400px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-background: #1e1a0c;
+        --color-surface: #332e1d;
+        --color-border: #4a3f20;
+        --color-foreground: #fbf6e3;
+        --color-muted: #cbb877;
+
+        --color-accent: #facc15;
+        --color-accent-foreground: #1e1a0c;
+    }
+} */
+
+/* Palette 5: Civic Green — classic ballot green */
+/* :root {
+    --color-background: #f1f8f2;
+    --color-surface: #ffffff;
+    --color-border: #cde7d1;
+    --color-foreground: #13291a;
+    --color-muted: #63836b;
+
+    --color-accent: #15803d;
+    --color-accent-foreground: #ffffff;
+
+    --safe-width: 1400px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-background: #0f1f14;
+        --color-surface: #17301e;
+        --color-border: #2c4e35;
+        --color-foreground: #eefbf1;
+        --color-muted: #9dc9a8;
+
+        --color-accent: #4ade80;
+        --color-accent-foreground: #0f1f14;
+    }
+} */
+
+/* Palette 6: Forest Green — deep, traditional, boardroom-serious */
+:root {
+    --color-background: #f2f6f2;
+    --color-surface: #ffffff;
+    --color-border: #d1ddd1;
+    --color-foreground: #14211a;
+    --color-muted: #5f7368;
+
+    --color-accent: #14532d;
+    --color-accent-foreground: #ffffff;
+
+    --safe-width: 1400px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-background: #0e1712;
+        --color-surface: #17241c;
+        --color-border: #2b3d31;
+        --color-foreground: #eef4ef;
+        --color-muted: #91ab99;
+
+        --color-accent: #4d9a6a;
+        --color-accent-foreground: #0e1712;
+    }
+}
+
+/* Palette 7: Emerald Green — vivid, energetic, growth-forward */
+/* :root {
+    --color-background: #f0faf4;
+    --color-surface: #ffffff;
+    --color-border: #c8ecd8;
+    --color-foreground: #052e1c;
+    --color-muted: #5a8a72;
+
+    --color-accent: #059669;
+    --color-accent-foreground: #ffffff;
+
+    --safe-width: 1400px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-background: #071b12;
+        --color-surface: #0f291b;
+        --color-border: #1f4633;
+        --color-foreground: #e9fbf1;
+        --color-muted: #86c0a3;
+
+        --color-accent: #34d399;
+        --color-accent-foreground: #071b12;
+    }
+} */
+
+/* Palette 8: Mint Green — light, fresh, modern-clinical trust */
+/* :root {
+    --color-background: #f2fbf8;
+    --color-surface: #ffffff;
+    --color-border: #c9ece2;
+    --color-foreground: #0c2b23;
+    --color-muted: #5c8a7c;
+
+    --color-accent: #0d9488;
+    --color-accent-foreground: #ffffff;
+
+    --safe-width: 1400px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-background: #0a1c18;
+        --color-surface: #12281f;
+        --color-border: #234438;
+        --color-foreground: #eafbf6;
+        --color-muted: #86c2b0;
+
+        --color-accent: #2dd4bf;
+        --color-accent-foreground: #0a1c18;
+    }
+} */
+
+/* Palette 9: Army Green — muted olive-drab, disciplined and institutional */
+/* :root {
+    --color-background: #f5f4ec;
+    --color-surface: #ffffff;
+    --color-border: #dedbbf;
+    --color-foreground: #23230f;
+    --color-muted: #767355;
+
+    --color-accent: #4d5a1e;
+    --color-accent-foreground: #ffffff;
+
+    --safe-width: 1400px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-background: #16160c;
+        --color-surface: #212014;
+        --color-border: #393726;
+        --color-foreground: #f5f3e6;
+        --color-muted: #a8a37e;
+
+        --color-accent: #8a9a4e;
+        --color-accent-foreground: #16160c;
     }
 } */
 
@@ -117,4 +282,4 @@ h2 {
 }
 h3 {
     font-size: 1.25rem;
-}   
+}
