@@ -2,7 +2,7 @@ import { useState } from "react";
 import PositionTabs from "./PositionTabs";
 import ProgressBar from "./ProgressBar";
 
-function CurrentPollsPanel({ electionResults }) {
+function CurrentPollsPanel({ electionResults, title = "Current Polls" }) {
     const [activePosition, setActivePosition] = useState(0);
     const currentPosition = electionResults[activePosition];
     const sortedCandidates = [...(currentPosition?.candidates ?? [])].sort((a, b) => b.votes - a.votes);
@@ -12,8 +12,8 @@ function CurrentPollsPanel({ electionResults }) {
         (currentPosition?.abstained ?? 0);
 
     return (
-        <div className="flex flex-col gap-4 bg-surface rounded-3xl p-5 md:col-span-2">
-            <h2>Current Polls</h2>
+        <div className="flex flex-col gap-4 bg-surface rounded-3xl p-5">
+            <h2>{title}</h2>
 
             <PositionTabs
                 positions={electionResults.map((position) => position.position)}
@@ -22,7 +22,7 @@ function CurrentPollsPanel({ electionResults }) {
                 alwaysShowArrows
             />
 
-            <div className="flex flex-col gap-3 max-h-72 overflow-y-auto pr-1">
+            <div className="flex flex-col gap-3 max-h-96 overflow-y-auto pr-1">
                 {sortedCandidates.map((candidate) => (
                     <div key={candidate.id} className="flex items-center gap-3">
                         <img

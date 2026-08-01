@@ -16,35 +16,24 @@ function ReviewVotesPanel({ electionCandidates, selections, onChangeVote, onSubm
             <div className="flex flex-col divide-y divide-border">
                 {electionCandidates.map((position, index) => {
                     const picks = selections[position.position] ?? [];
-                    const hasAbstained = picks.includes("Abstain");
                     const pickedCandidates = position.candidates.filter((candidate) =>
                         picks.includes(candidate.id)
                     );
+                    const hasAbstained = pickedCandidates.length === 0;
 
                     return (
-                        <div key={position.position} className="flex flex-col md:flex-row gap-3 py-4">
+                        <div key={position.position} className="flex flex-col md:flex-row md:items-center gap-3 py-4">
                             <div className="flex items-center gap-2 md:w-60 shrink-0">
-                                <span className="font-semibold text-foreground">{position.position}</span>
+                                <span className="text-lg font-bold text-foreground">{position.position}</span>
                                 <span className="text-xs font-medium text-muted bg-background px-2 py-0.5 rounded-full">
                                     {pickedCandidates.length} / {position.maxVotes}
                                 </span>
-                                <button
-                                    type="button"
-                                    onClick={() => onChangeVote(index)}
-                                    className="text-xs font-medium text-muted underline underline-offset-2 transition hover:text-foreground"
-                                >
-                                    Edit
-                                </button>
                             </div>
 
                             <div className="flex flex-wrap gap-3 flex-1">
                                 {hasAbstained ? (
                                     <span className="text-sm font-medium text-muted italic self-center">
                                         Abstained
-                                    </span>
-                                ) : pickedCandidates.length === 0 ? (
-                                    <span className="text-sm font-medium text-muted italic self-center">
-                                        No selection made
                                     </span>
                                 ) : (
                                     pickedCandidates.map((candidate) => (
@@ -65,6 +54,14 @@ function ReviewVotesPanel({ electionCandidates, selections, onChangeVote, onSubm
                                     ))
                                 )}
                             </div>
+
+                            <button
+                                type="button"
+                                onClick={() => onChangeVote(index)}
+                                className="shrink-0 px-4 py-2 rounded-lg font-medium text-foreground border border-border transition hover:bg-background self-start md:self-center"
+                            >
+                                Change Vote
+                            </button>
                         </div>
                     );
                 })}

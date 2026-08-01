@@ -1,6 +1,12 @@
 import { useRef } from "react";
 
-function PositionTabs({ positions, activeIndex, onSelect, completed = [], alwaysShowArrows = false }) {
+function PositionTabs({
+    positions,
+    activeIndex,
+    onSelect,
+    voteCounts = [],
+    alwaysShowArrows = false,
+}) {
     const trackRef = useRef(null);
 
     const scrollByAmount = (direction) => {
@@ -28,7 +34,10 @@ function PositionTabs({ positions, activeIndex, onSelect, completed = [], always
             >
                 {positions.map((position, index) => {
                     const isActive = index === activeIndex;
-                    const isCompleted = completed[index];
+                    const voteCount = voteCounts[index] ?? 0;
+                    const hasSelection = voteCount > 0;
+                    const icon = hasSelection ? "✓" : index + 1;
+
                     return (
                         <button
                             key={position}
@@ -42,14 +51,14 @@ function PositionTabs({ positions, activeIndex, onSelect, completed = [], always
                         >
                             <span
                                 className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold ${
-                                    isCompleted
+                                    hasSelection
                                         ? "bg-accent text-accent-foreground"
                                         : isActive
                                         ? "bg-accent/20 text-foreground"
                                         : "bg-background text-muted"
                                 }`}
                             >
-                                {isCompleted ? "✓" : index + 1}
+                                {icon}
                             </span>
                             <span className={isActive ? "text-foreground font-medium" : ""}>
                                 {position}
