@@ -6,7 +6,7 @@ class ElectionContract {
   constructor (publicKey, network, electionCategory, openTime, closeTime) {
     this.publicKey = publicKey
     this.network = network;
-    this.electionCategory = electionCategory;
+    this.electionCategory = electionCategory
     this.openTime = openTime;
     this.closeTime = closeTime;
     this.provider = new ElectrumNetworkProvider(this.network)
@@ -15,7 +15,7 @@ class ElectionContract {
 
     const contractParams = [
       ownerPkh,
-      this.electionCategory,
+      Buffer.from(this.electionCategory, "hex").reverse(),
       this.openTime,
       this.closeTime
     ]
@@ -41,12 +41,15 @@ class ElectionContract {
   async castVote(walletAddress, walletTemplate, electionCategory, candidateId, voterId) {
     // get contract utxos
     const contractUtxos = await this.getContractUtxos();
+    console.log('contract utxos', contractUtxos);
 
     // find the specific candidate nft on their candidate Id
-    const candidateNFT = contractUtxos.find(
-      utxo => utxo.token?.category == electionCategory &&
+    const candidateNFT = contractUtxos.find(utxo => {
+      console.log(decodeCommitment(utxo.token?.nft?.commitment, 0))
+
+      return utxo => utxo?.token?.category == electionCategory &&
       decodeCommitment(utxo.token?.nft?.commitment, 0) == candidateId
-    );
+    });
     if (!candidateNFT) {
       console.error("Candidate NFT not found inside contract.");
       return;
@@ -93,6 +96,10 @@ class ElectionContract {
     const tb = new TransactionBuilder({provider: this.provider});
     tb.addInput(candidateNFT, this.contract.unlock.castVote());
     tb.addInput(voterNFT, walletTemplate.unlockP2PKH());
+    console.log(Math.floor(Date.now() / 1000));
+    console.log(this.closeTime);
+    console.log(this.openTime);
+    tb.setLocktime(Number(this.openTime));
     tb.addOutput(
       {  
         to: this.getContractTokenAddress(),
@@ -107,9 +114,12 @@ class ElectionContract {
         }
       } 
     )
-    
-    const txId = await tb.send();
-    return txId;
+    console.log("BEFORE SEND");
+
+    const result = await tb.send();
+
+    console.log("AFTER SEND", result);
+    return result['txid'];
   }
 }
 

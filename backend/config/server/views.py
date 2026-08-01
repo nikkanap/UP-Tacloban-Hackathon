@@ -201,7 +201,7 @@ class VotesViewSet(viewsets.ModelViewSet):
       return Response(
           {
             "success": True,
-            "txid": response.txid
+            "txid": response
           },
           status=status.HTTP_200_OK
       )
