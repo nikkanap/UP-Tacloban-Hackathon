@@ -215,13 +215,15 @@ function CreateElectionPage() {
                   <span className="text-sm text-muted">
                     {position.seats} {position.seats === 1 ? "seat" : "seats"}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => removePosition(position.id)}
-                    className="text-sm text-muted transition hover:text-foreground"
-                  >
-                    Remove
-                  </button>
+                  {election.positions.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removePosition(position.id)}
+                      className="text-sm text-muted transition hover:text-foreground"
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
               </li>
             ))}

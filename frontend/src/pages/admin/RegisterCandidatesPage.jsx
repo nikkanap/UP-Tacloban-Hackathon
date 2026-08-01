@@ -27,7 +27,7 @@ function RegisterCandidatesPage() {
 
   const handleAddCandidate = (event) => {
     event.preventDefault();
-    if (!form.name.trim()) return;
+    if (!form.name.trim() || !form.position) return;
     addCandidate({ ...form, name: form.name.trim() });
     setForm({
       name: "",

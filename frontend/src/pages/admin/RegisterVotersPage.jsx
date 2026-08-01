@@ -16,6 +16,7 @@ function RegisterVotersPage() {
   const [form, setForm] = useState({ name: "", voterId: "", email: "" });
   const [fileName, setFileName] = useState("");
   const [parsedRows, setParsedRows] = useState([]);
+  const [skippedRows, setSkippedRows] = useState(0);
 
   if (locked) return <LockedNotice />;
 
@@ -28,7 +29,8 @@ function RegisterVotersPage() {
   ];
 
   const handleFileChange = (event) => {
-    const file = event.target.files?.[0];
+    const input = event.target;
+    const file = input.files?.[0];
     if (!file) return;
     setFileName(file.name);
 
@@ -43,11 +45,24 @@ function RegisterVotersPage() {
       const hasHeader = rows.length > 0 && /name/i.test(rows[0][0] ?? "");
       const dataRows = hasHeader ? rows.slice(1) : rows;
 
-      setParsedRows(
-        dataRows.map(([name, voterId, email]) => ({ name, voterId, email })),
-      );
+      // A row is only usable with both a name and a voter ID. Short or junk
+      // lines would otherwise import as blank voters and inflate the count.
+      const cleaned = dataRows
+        .map(([name, voterId, email]) => ({
+          name: (name ?? "").trim(),
+          voterId: (voterId ?? "").trim(),
+          email: (email ?? "").trim(),
+        }))
+        .filter((row) => row.name && row.voterId);
+
+      setParsedRows(cleaned);
+      setSkippedRows(dataRows.length - cleaned.length);
     };
     reader.readAsText(file);
+
+    // Clearing the input lets the same file be picked again later; the read
+    // above already holds its own reference to the File.
+    input.value = "";
   };
 
   const handleIndividualSubmit = (event) => {
@@ -61,6 +76,7 @@ function RegisterVotersPage() {
     if (parsedRows.length === 0) return;
     importVoters(parsedRows);
     setParsedRows([]);
+    setSkippedRows(0);
     setFileName("");
     navigate("/admin/review");
   };
@@ -183,7 +199,9 @@ function RegisterVotersPage() {
               </span>
               <span className="text-sm text-muted">
                 {fileName
-                  ? `${parsedRows.length} rows detected · choose another file to replace`
+                  ? `${parsedRows.length} valid rows${
+                      skippedRows > 0 ? ` · ${skippedRows} skipped` : ""
+                    } · choose another file to replace`
                   : "Columns: name, voter ID, email"}
               </span>
               <input
@@ -208,9 +226,9 @@ function RegisterVotersPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {parsedRows.slice(0, PREVIEW_ROW_COUNT).map((row) => (
+                      {parsedRows.slice(0, PREVIEW_ROW_COUNT).map((row, index) => (
                         <tr
-                          key={row.voterId}
+                          key={`${row.voterId}-${index}`}
                           className="border-t border-border"
                         >
                           <td className="py-3 pr-4 font-medium text-foreground">

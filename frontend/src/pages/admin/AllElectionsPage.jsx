@@ -133,8 +133,22 @@ function AllElectionsPage() {
                   <tr
                     key={entry.id}
                     onClick={() => openElection(entry)}
+                    onKeyDown={(event) => {
+                      if (!entry.isCurrent) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        openElection(entry);
+                      }
+                    }}
+                    tabIndex={entry.isCurrent ? 0 : undefined}
+                    role={entry.isCurrent ? "button" : undefined}
+                    aria-label={
+                      entry.isCurrent ? `Open ${entry.title}` : undefined
+                    }
                     className={`border-t border-border ${
-                      entry.isCurrent ? "cursor-pointer hover:bg-background" : ""
+                      entry.isCurrent
+                        ? "cursor-pointer hover:bg-background focus:outline-none focus:bg-background"
+                        : ""
                     }`}
                   >
                     <td className="py-3 pr-4 font-medium text-foreground">
