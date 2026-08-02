@@ -36,6 +36,7 @@ export function buildTally(votes, candidates, positions = []) {
       return {
         id: candidate.id,
         name: candidate.full_name,
+        positionId: candidate.position,
         subtitle: positionNameById.get(candidate.position) ?? null,
         votes: count,
         percentage: positionTotal
@@ -60,6 +61,33 @@ export const countBallots = (votes) =>
 
 export const turnoutPercent = (ballotsCast, voterCount) =>
   voterCount > 0 ? Math.round((ballotsCast / voterCount) * 100) : 0;
+
+// Leaders per position, from the standings buildTally returns. Ties are kept
+// rather than broken arbitrarily — an election result should say "tied", not
+// silently pick whichever candidate sorted first.
+export function winnersByPosition(standings) {
+  const byPosition = new Map();
+
+  for (const entry of standings) {
+    const group = byPosition.get(entry.positionId);
+    if (group) group.push(entry);
+    else byPosition.set(entry.positionId, [entry]);
+  }
+
+  return [...byPosition.values()].map((group) => {
+    const topVotes = Math.max(...group.map((entry) => entry.votes));
+    const leaders = group.filter((entry) => entry.votes === topVotes);
+
+    return {
+      positionId: group[0].positionId,
+      position: group[0].subtitle,
+      totalVotes: group.reduce((sum, entry) => sum + entry.votes, 0),
+      // Nobody wins a position where no vote was cast.
+      leaders: topVotes > 0 ? leaders : [],
+      tied: topVotes > 0 && leaders.length > 1,
+    };
+  });
+}
 
 // Newest first, for the ledger panel.
 export const recentBallots = (votes, limit = 10) =>
