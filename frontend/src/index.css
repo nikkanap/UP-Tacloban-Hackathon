@@ -136,7 +136,7 @@
 } */
 
 /* Palette 6: Forest Green — deep, traditional, boardroom-serious */
-:root {
+/* :root {
     --color-background: #f2f6f2;
     --color-surface: #ffffff;
     --color-border: #d1ddd1;
@@ -160,10 +160,10 @@
         --color-accent: #4d9a6a;
         --color-accent-foreground: #0e1712;
     }
-}
+} */
 
 /* Palette 7: Emerald Green — vivid, energetic, growth-forward */
-/* :root {
+:root {
     --color-background: #f0faf4;
     --color-surface: #ffffff;
     --color-border: #c8ecd8;
@@ -187,7 +187,7 @@
         --color-accent: #34d399;
         --color-accent-foreground: #071b12;
     }
-} */
+}
 
 /* Palette 8: Mint Green — light, fresh, modern-clinical trust */
 /* :root {
