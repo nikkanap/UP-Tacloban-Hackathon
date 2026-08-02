@@ -1,14 +1,30 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo/logo.svg";
 
-function LoginForm() {
-    const navigate = useNavigate();
+function LoginForm({ onSubmit, isLoading = false, error = "" }) {
     const [mode, setMode] = useState("voter");
+    const [voterId, setVoterId] = useState("");
+    const [voterKey, setVoterKey] = useState("");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        navigate(mode === "voter" ? "/voter-dashboard" : "/admin/dashboard");
+
+        if (mode === "admin") {
+            onSubmit({
+                mode,
+                username: username.trim(),
+                password,
+            });
+            return;
+        }
+
+        onSubmit({
+            mode,
+            voterId: voterId.trim(),
+            voterKey: voterKey.trim(),
+        });
     };
 
     return (
@@ -45,7 +61,7 @@ function LoginForm() {
                             mode === "voter" ? "text-accent-foreground" : "text-muted"
                         }`}
                     >
-                        Login as Voter
+                        Voter
                     </button>
                     <button
                         type="button"
@@ -54,69 +70,37 @@ function LoginForm() {
                             mode === "admin" ? "text-accent-foreground" : "text-muted"
                         }`}
                     >
-                        Login as Admin
+                        Admin
                     </button>
                 </div>
             </div>
 
             <form className="flex flex-col gap-5 p-8" onSubmit={handleSubmit}>
-                {mode === "voter" ? (
-                    <>
-                        <div className="flex flex-col gap-1 text-center">
-                            <h1 className="text-2xl font-semibold text-foreground">Welcome</h1>
-                            <p className="text-sm text-muted">Enter credentials to start voting</p>
-                        </div>
+                <div className="flex flex-col gap-1 text-center">
+                    <h1 className="text-2xl font-semibold text-foreground">
+                        {mode === "admin" ? "Admin Login" : "Welcome"}
+                    </h1>
+                    <p className="text-sm text-muted">
+                        {mode === "admin"
+                            ? "Enter admin credentials to manage elections"
+                            : "Enter credentials to start voting"}
+                    </p>
+                </div>
 
+                {mode === "admin" ? (
+                    <>
                         <div className="flex flex-col gap-1.5">
-                            <label htmlFor="voterId" className="text-sm font-medium text-foreground">
-                                Voter ID
+                            <label htmlFor="adminUsername" className="text-sm font-medium text-foreground">
+                                Username
                             </label>
                             <input
-                                id="voterId"
+                                id="adminUsername"
                                 type="text"
-                                placeholder="Enter your voter ID"
-                                className="border border-border bg-background text-foreground p-2.5 rounded-lg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
-                            />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                            <label htmlFor="voterKey" className="text-sm font-medium text-foreground">
-                                Voter Key
-                            </label>
-                            <input
-                                id="voterKey"
-                                type="password"
-                                placeholder="Enter your voter key"
-                                className="border border-border bg-background text-foreground p-2.5 rounded-lg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            className="bg-accent text-accent-foreground font-medium p-2.5 rounded-lg transition hover:opacity-90 active:opacity-80"
-                        >
-                            Login
-                        </button>
-
-                        <p className="text-xs text-muted text-center">
-                            Don't know your credentials? Please contact your election administrator for assistance.
-                        </p>
-                    </>
-                ) : (
-                    <>
-                        <div className="flex flex-col gap-1 text-center">
-                            <h1 className="text-2xl font-semibold text-foreground">Admin Login</h1>
-                            <p className="text-sm text-muted">Sign in to manage your organization's elections</p>
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                            <label htmlFor="adminEmail" className="text-sm font-medium text-foreground">
-                                Admin Email
-                            </label>
-                            <input
-                                id="adminEmail"
-                                type="email"
-                                placeholder="Enter your admin email"
+                                value={username}
+                                onChange={(event) => setUsername(event.target.value)}
+                                placeholder="Enter admin username"
+                                autoComplete="username"
+                                required
                                 className="border border-border bg-background text-foreground p-2.5 rounded-lg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
                             />
                         </div>
@@ -128,26 +112,64 @@ function LoginForm() {
                             <input
                                 id="adminPassword"
                                 type="password"
-                                placeholder="Enter your password"
+                                value={password}
+                                onChange={(event) => setPassword(event.target.value)}
+                                placeholder="Enter admin password"
+                                autoComplete="current-password"
+                                required
+                                className="border border-border bg-background text-foreground p-2.5 rounded-lg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
+                            />
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div className="flex flex-col gap-1.5">
+                            <label htmlFor="voterId" className="text-sm font-medium text-foreground">
+                                Voter ID
+                            </label>
+                            <input
+                                id="voterId"
+                                type="text"
+                                value={voterId}
+                                onChange={(event) => setVoterId(event.target.value)}
+                                placeholder="Enter your voter ID"
+                                autoComplete="username"
+                                required
                                 className="border border-border bg-background text-foreground p-2.5 rounded-lg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
                             />
                         </div>
 
-                        <button
-                            type="submit"
-                            className="bg-accent text-accent-foreground font-medium p-2.5 rounded-lg transition hover:opacity-90 active:opacity-80"
-                        >
-                            Login
-                        </button>
-
-                        <p className="text-xs text-muted text-center">
-                            Don't have an organization account yet?{" "}
-                            <Link to="/register-organization" className="font-medium text-accent hover:underline">
-                                Register
-                            </Link>
-                        </p>
+                        <div className="flex flex-col gap-1.5">
+                            <label htmlFor="voterKey" className="text-sm font-medium text-foreground">
+                                Voter Key
+                            </label>
+                            <input
+                                id="voterKey"
+                                type="password"
+                                value={voterKey}
+                                onChange={(event) => setVoterKey(event.target.value)}
+                                placeholder="Enter your voter key"
+                                autoComplete="current-password"
+                                required
+                                className="border border-border bg-background text-foreground p-2.5 rounded-lg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
+                            />
+                        </div>
                     </>
                 )}
+
+                {error ? (
+                    <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                        {error}
+                    </p>
+                ) : null}
+
+                <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="bg-accent text-accent-foreground font-medium p-2.5 rounded-lg transition hover:opacity-90 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                    {isLoading ? "Logging in..." : "Login"}
+                </button>
             </form>
         </div>
     );

@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiRequest } from "../../api";
 import { useAdminElection } from "../../context/AdminElectionContext";
 
 const inputClass =
   "border border-border bg-background text-foreground p-2.5 rounded-lg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20";
+
+const isNumericId = (value) => /^\d+$/.test(String(value).trim());
 
 function CreateElectionPage() {
   const navigate = useNavigate();
@@ -16,8 +19,11 @@ function CreateElectionPage() {
     startNewElection,
   } = useAdminElection();
 
+  const [positionId, setPositionId] = useState("");
   const [positionName, setPositionName] = useState("");
   const [positionSeats, setPositionSeats] = useState(1);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
 
   // The current election is locked, so this page can only mean "start another".
   // Ask first — starting over clears the registered candidates and voters.
@@ -55,15 +61,100 @@ function CreateElectionPage() {
   }
 
   const handleAddPosition = () => {
-    if (!positionName.trim()) return;
-    addPosition(positionName.trim(), Number(positionSeats) || 1);
+    if (!positionId.trim() || !positionName.trim()) return;
+    addPosition(positionName.trim(), Number(positionSeats) || 1, positionId.trim());
+    setPositionId("");
     setPositionName("");
     setPositionSeats(1);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    navigate("/admin/register-candidates");
+
+    if (
+      !election.id?.trim() ||
+      !election.title.trim() ||
+      !election.startTime ||
+      !election.endTime
+    ) {
+      setError("Election ID, title, opening time, and closing time are required.");
+      return;
+    }
+
+    if (!isNumericId(election.id)) {
+      setError("Election ID must be numeric for blockchain NFT creation.");
+      return;
+    }
+
+    if (election.positions.length === 0) {
+      setError("Add at least one position before continuing.");
+      return;
+    }
+
+    const invalidPosition = election.positions.find(
+      (position) => !String(position.id).trim() || !position.name.trim(),
+    );
+
+    if (invalidPosition) {
+      setError("Every position needs both a position ID and name.");
+      return;
+    }
+
+    const nonNumericPosition = election.positions.find(
+      (position) => !isNumericId(position.id),
+    );
+
+    if (nonNumericPosition) {
+      setError("Every position ID must be numeric for blockchain NFT creation.");
+      return;
+    }
+
+    setIsSaving(true);
+    setError("");
+
+    try {
+      const savedElection = await apiRequest("elections/", {
+        method: "POST",
+        body: JSON.stringify({
+          id: election.id.trim(),
+          name: election.title.trim(),
+          date_start: new Date(election.startTime).toISOString(),
+          date_end: new Date(election.endTime).toISOString(),
+        }),
+      });
+
+      const savedPositions = [];
+
+      for (const position of election.positions) {
+        const savedPosition = await apiRequest("positions/", {
+          method: "POST",
+          body: JSON.stringify({
+            id: String(position.id).trim(),
+            election: savedElection.id,
+            name: position.name.trim(),
+          }),
+        });
+
+        savedPositions.push({
+          ...position,
+          id: savedPosition.id,
+          name: savedPosition.name,
+        });
+      }
+
+      updateElection({
+        id: savedElection.id,
+        title: savedElection.name,
+        startTime: election.startTime,
+        endTime: election.endTime,
+        positions: savedPositions,
+      });
+      navigate("/admin/register-candidates");
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -84,6 +175,23 @@ function CreateElectionPage() {
       </div>
 
       <div className="flex flex-col gap-5 bg-surface rounded-3xl p-5">
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="electionId"
+            className="text-sm font-medium text-foreground"
+          >
+            Election ID
+          </label>
+          <input
+            id="electionId"
+            type="text"
+            value={election.id ?? ""}
+            onChange={(event) => updateElection({ id: event.target.value })}
+            placeholder="1"
+            className={inputClass}
+          />
+        </div>
+
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="title"
@@ -177,6 +285,13 @@ function CreateElectionPage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <input
             type="text"
+            value={positionId}
+            onChange={(event) => setPositionId(event.target.value)}
+            placeholder="Position ID"
+            className={`${inputClass} sm:w-36`}
+          />
+          <input
+            type="text"
             value={positionName}
             onChange={(event) => setPositionName(event.target.value)}
             placeholder="Position name"
@@ -212,6 +327,9 @@ function CreateElectionPage() {
                   {position.name}
                 </span>
                 <div className="flex items-center gap-4">
+                  <span className="text-sm text-muted tabular-nums">
+                    ID {position.id}
+                  </span>
                   <span className="text-sm text-muted">
                     {position.seats} {position.seats === 1 ? "seat" : "seats"}
                   </span>
@@ -231,12 +349,15 @@ function CreateElectionPage() {
         )}
       </div>
 
+      {error && <p className="text-sm text-red-600">{error}</p>}
+
       <div className="flex justify-end">
         <button
           type="submit"
-          className="px-5 py-2.5 rounded-lg font-medium bg-accent text-accent-foreground transition hover:opacity-90 active:opacity-80"
+          disabled={isSaving}
+          className="px-5 py-2.5 rounded-lg font-medium bg-accent text-accent-foreground transition hover:opacity-90 active:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          Save &amp; Continue →
+          {isSaving ? "Saving..." : "Save & Continue →"}
         </button>
       </div>
     </form>

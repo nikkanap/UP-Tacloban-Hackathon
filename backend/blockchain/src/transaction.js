@@ -16,17 +16,17 @@ export async function sendTokenToAddress(
   receiverAddress, 
   token,
   tokenSat=1000n,
+  utxo,
 ) {
-  console.log(token)
-  const txid = await senderWallet.send([
-    new TokenSendRequest({
-      cashaddr: receiverAddress,  // address of contract
-      value: tokenSat,       
-      category: token.category,     // amount to send in satoshis
-      amount: token.amount ?? 0n,
-      nft: token.nft
-    })
-  ]);
+  const request = new TokenSendRequest({
+    cashaddr: receiverAddress,  // address of contract
+    value: tokenSat,       
+    category: token.category,     // amount to send in satoshis
+    amount: token.amount ?? 0n,
+    nft: token.nft
+  });
+  const options = utxo ? { ensureUtxos: [utxo] } : undefined;
+  const txid = await senderWallet.send([request], options);
   console.log(`Token sent to address ${receiverAddress}`)
   return txid;
 }

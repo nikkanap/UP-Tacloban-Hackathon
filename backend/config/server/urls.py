@@ -3,6 +3,9 @@ from . import views
 
 urlpatterns = [
   # Voters
+  path('login-voter/', views.LoginVoter.as_view()),
+  path('login-admin/', views.LoginAdmin.as_view()),
+  
   path('voters/', views.VotersViewSet.as_view({'get': 'list', 'post': 'create'})),
   path('voters/<str:pk>/', views.VotersViewSet.as_view({'get': 'retrieve'})),
   path('voters/<str:pk>/update/', views.VotersViewSet.as_view({'put': 'update', 'patch': 'partial_update'})),
@@ -11,6 +14,7 @@ urlpatterns = [
   # Elections
   path('elections/', views.ElectionsViewSet.as_view({'get': 'list', 'post': 'create'})),
   path('elections/<str:pk>/', views.ElectionsViewSet.as_view({'get': 'retrieve'})),
+  path('elections/<str:election_id>/turnout/', views.ElectionTurnoutView.as_view()),
   path('elections/<str:pk>/update/', views.ElectionsViewSet.as_view({'put': 'update', 'patch': 'partial_update'})),
   path('elections/<str:pk>/delete/', views.ElectionsViewSet.as_view({'delete': 'destroy'})),
 

@@ -32,12 +32,13 @@ const PAST_ELECTIONS = [
 
 export function AdminElectionProvider({ children }) {
   const [election, setElection] = useState({
+    id: "",
     title: "",
     description: "",
     startTime: "",
     endTime: "",
     requireCredential: true,
-    positions: [{ id: createId(), name: "President", seats: 1 }],
+    positions: [{ id: "1", name: "President", seats: 1 }],
   });
 
   const [candidates, setCandidates] = useState([
@@ -69,10 +70,10 @@ export function AdminElectionProvider({ children }) {
   const updateElection = (changes) =>
     setElection((current) => ({ ...current, ...changes }));
 
-  const addPosition = (name, seats) =>
+  const addPosition = (name, seats, id = createId()) =>
     setElection((current) => ({
       ...current,
-      positions: [...current.positions, { id: createId(), name, seats }],
+      positions: [...current.positions, { id, name, seats }],
     }));
 
   const removePosition = (id) =>
@@ -82,7 +83,10 @@ export function AdminElectionProvider({ children }) {
     }));
 
   const addCandidate = (candidate) =>
-    setCandidates((current) => [...current, { ...candidate, id: createId() }]);
+    setCandidates((current) => [
+      ...current,
+      { ...candidate, id: candidate.id ?? createId() },
+    ]);
 
   const removeCandidate = (id) =>
     setCandidates((current) =>
@@ -90,12 +94,15 @@ export function AdminElectionProvider({ children }) {
     );
 
   const addVoter = (voter) =>
-    setVoters((current) => [...current, { ...voter, id: createId() }]);
+    setVoters((current) => [
+      ...current,
+      { ...voter, id: voter.id ?? createId() },
+    ]);
 
   const importVoters = (rows) =>
     setVoters((current) => [
       ...current,
-      ...rows.map((row) => ({ ...row, id: createId() })),
+      ...rows.map((row) => ({ ...row, id: row.id ?? createId() })),
     ]);
 
   const removeVoter = (id) =>
@@ -108,12 +115,13 @@ export function AdminElectionProvider({ children }) {
   // immutable; starting a new one is the way out of that.
   const startNewElection = () => {
     setElection({
+      id: "",
       title: "",
       description: "",
       startTime: "",
       endTime: "",
       requireCredential: true,
-      positions: [{ id: createId(), name: "President", seats: 1 }],
+      positions: [{ id: "1", name: "President", seats: 1 }],
     });
     setCandidates([]);
     setVoters([]);

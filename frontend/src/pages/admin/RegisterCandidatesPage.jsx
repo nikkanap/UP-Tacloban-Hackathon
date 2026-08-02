@@ -1,40 +1,98 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LockedNotice from "../../components/LockedNotice";
+import { apiRequest } from "../../api";
 import { useAdminElection } from "../../context/AdminElectionContext";
 
 const inputClass =
   "border border-border bg-background text-foreground p-2.5 rounded-lg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20";
+
+const isNumericId = (value) => /^\d+$/.test(String(value).trim());
 
 function RegisterCandidatesPage() {
   const navigate = useNavigate();
   const { election, candidates, addCandidate, removeCandidate, locked } =
     useAdminElection();
 
-  const positionOptions = election.positions.map((position) => position.name);
+  const positionOptions = election.positions;
 
   const [form, setForm] = useState({
+    candidateId: "",
     name: "",
-    position: positionOptions[0] ?? "",
+    electionId: election.id ?? "",
+    positionId: positionOptions[0]?.id ?? "",
     party: "",
     bio: "",
   });
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
 
   if (locked) return <LockedNotice />;
 
   const updateField = (field) => (event) =>
     setForm({ ...form, [field]: event.target.value });
 
-  const handleAddCandidate = (event) => {
+  const selectedPosition = positionOptions.find(
+    (position) => position.id === form.positionId,
+  );
+
+  const handleAddCandidate = async (event) => {
     event.preventDefault();
-    if (!form.name.trim() || !form.position) return;
-    addCandidate({ ...form, name: form.name.trim() });
-    setForm({
-      name: "",
-      position: positionOptions[0] ?? "",
-      party: "",
-      bio: "",
-    });
+    if (
+      !form.candidateId.trim() ||
+      !form.name.trim() ||
+      !form.electionId.trim() ||
+      !form.positionId
+    ) {
+      setError("Candidate ID, name, election, and position are required.");
+      return;
+    }
+
+    if (
+      !isNumericId(form.candidateId) ||
+      !isNumericId(form.electionId) ||
+      !isNumericId(form.positionId)
+    ) {
+      setError("Candidate, election, and position IDs must be numeric for blockchain NFT creation.");
+      return;
+    }
+
+    setIsSaving(true);
+    setError("");
+
+    try {
+      const candidate = await apiRequest("candidates/", {
+        method: "POST",
+        body: JSON.stringify({
+          id: form.candidateId.trim(),
+          full_name: form.name.trim(),
+          election: form.electionId.trim(),
+          position: form.positionId,
+        }),
+      });
+
+      addCandidate({
+        id: candidate.id,
+        name: candidate.full_name,
+        position: selectedPosition?.name ?? form.positionId,
+        positionId: candidate.position,
+        electionId: candidate.election,
+        party: form.party.trim(),
+        bio: form.bio.trim(),
+      });
+      setForm({
+        candidateId: "",
+        name: "",
+        electionId: election.id ?? form.electionId,
+        positionId: positionOptions[0]?.id ?? "",
+        party: "",
+        bio: "",
+      });
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const getInitials = (name) =>
@@ -74,6 +132,23 @@ function RegisterCandidatesPage() {
           <div className="flex-1 flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label
+                htmlFor="candidateId"
+                className="text-sm font-medium text-foreground"
+              >
+                Candidate ID
+              </label>
+              <input
+                id="candidateId"
+                type="text"
+                value={form.candidateId}
+                onChange={updateField("candidateId")}
+                placeholder="1"
+                className={inputClass}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label
                 htmlFor="candidateName"
                 className="text-sm font-medium text-foreground"
               >
@@ -91,6 +166,23 @@ function RegisterCandidatesPage() {
 
             <div className="flex flex-col gap-1.5">
               <label
+                htmlFor="candidateElection"
+                className="text-sm font-medium text-foreground"
+              >
+                Election ID
+              </label>
+              <input
+                id="candidateElection"
+                type="text"
+                value={form.electionId}
+                onChange={updateField("electionId")}
+                placeholder="1"
+                className={inputClass}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label
                 htmlFor="candidatePosition"
                 className="text-sm font-medium text-foreground"
               >
@@ -98,13 +190,13 @@ function RegisterCandidatesPage() {
               </label>
               <select
                 id="candidatePosition"
-                value={form.position}
-                onChange={updateField("position")}
+                value={form.positionId}
+                onChange={updateField("positionId")}
                 className={inputClass}
               >
                 {positionOptions.map((position) => (
-                  <option key={position} value={position}>
-                    {position}
+                  <option key={position.id} value={position.id}>
+                    {position.name}
                   </option>
                 ))}
               </select>
@@ -147,12 +239,15 @@ function RegisterCandidatesPage() {
           />
         </div>
 
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
         <div className="flex justify-start">
           <button
             type="submit"
+            disabled={isSaving}
             className="px-4 py-2.5 rounded-lg font-medium border border-border text-foreground transition hover:bg-background active:opacity-80"
           >
-            + Add Candidate
+            {isSaving ? "Saving..." : "+ Add Candidate"}
           </button>
         </div>
       </form>

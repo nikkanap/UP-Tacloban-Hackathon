@@ -7,17 +7,17 @@ class ElectionContract {
     this.publicKey = publicKey
     this.network = network;
     this.electionCategory = electionCategory;
-    this.openTime = openTime;
-    this.closeTime = closeTime;
+    this.openTime = BigInt(openTime);
+    this.closeTime = BigInt(closeTime);
     this.provider = new ElectrumNetworkProvider(this.network)
 
     const ownerPkh = this.getPubKeyHash(this.publicKey);
 
     const contractParams = [
       ownerPkh,
-      this.electionCategory,
-      this.openTime,
-      this.closeTime
+      Buffer.from(this.electionCategory, "hex").reverse(),
+      //this.openTime,
+      //this.closeTime
     ]
 
     this.contract = new Contract(contractArtifact, contractParams, { provider: this.provider })
@@ -80,8 +80,9 @@ class ElectionContract {
     newCommitment.writeBigUInt64LE(updatedCount, 16);  // position
 
     const tb = new TransactionBuilder({provider: this.provider});
-    tb.addInput(candidateNFT, this.contract.unlock.castVote());
-    tb.addInput(voterNFT, walletTemplate.unlockP2PKH());
+    tb.addInput(candidateNFT, this.contract.unlock.castVote(), { sequence: 0xfffffffe });
+    tb.addInput(voterNFT, walletTemplate.unlockP2PKH(), { sequence: 0xfffffffe });
+    //tb.setLocktime(Number(this.openTime)-100);
     tb.addOutput(
       {  
         to: this.getContractTokenAddress(),
@@ -96,7 +97,6 @@ class ElectionContract {
         }
       } 
     )
-    
     const txId = await tb.send();
     return txId;
   }
