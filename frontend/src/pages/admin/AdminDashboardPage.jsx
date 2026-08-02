@@ -1,18 +1,34 @@
+import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAdminElection } from "../../context/AdminElectionContext";
+import { api } from "../../services/api";
+import { useApiQuery } from "../../hooks/useApiQuery";
+import { ELECTION_STATUS, getElectionStatus } from "../../utils/electionStatus";
+
+const EMPTY = { elections: [], voters: [] };
 
 function AdminDashboardPage() {
   const navigate = useNavigate();
-  const { voters, getElectionStatus } = useAdminElection();
 
-  const status = getElectionStatus();
+  const fetchDashboard = useCallback(async (signal) => {
+    const [elections, voters] = await Promise.all([
+      api.elections.list({ signal }),
+      api.voters.list({ signal }),
+    ]);
+    return { elections, voters };
+  }, []);
+
+  const { data, loading, error, refresh } = useApiQuery(fetchDashboard, {
+    initialData: EMPTY,
+  });
+
+  const { elections, voters } = data ?? EMPTY;
+
+  const countByStatus = (status) =>
+    elections.filter((election) => getElectionStatus(election) === status).length;
 
   const stats = [
-    { label: "Active Elections", value: status === "live" ? 1 : 0 },
-    {
-      label: "Draft Elections",
-      value: status === "draft" ? 1 : 0,
-    },
+    { label: "Active Elections", value: countByStatus(ELECTION_STATUS.LIVE) },
+    { label: "Draft Elections", value: countByStatus(ELECTION_STATUS.DRAFT) },
     { label: "Total Registered Voters", value: voters.length },
   ];
 
@@ -35,6 +51,19 @@ function AdminDashboardPage() {
         </p>
       </div>
 
+      {error && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border border-border rounded-2xl p-4">
+          <span className="text-sm text-foreground">{error.message}</span>
+          <button
+            type="button"
+            onClick={refresh}
+            className="px-4 py-1.5 rounded-lg text-sm font-medium bg-accent text-accent-foreground transition hover:opacity-90 active:opacity-80"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {stats.map(({ label, value }) => (
           <div
@@ -42,7 +71,7 @@ function AdminDashboardPage() {
             className="flex flex-col gap-1 bg-surface rounded-2xl p-4"
           >
             <span className="text-2xl font-bold text-foreground tabular-nums">
-              {value.toLocaleString()}
+              {loading ? "—" : value.toLocaleString()}
             </span>
             <span className="text-sm text-muted">{label}</span>
           </div>

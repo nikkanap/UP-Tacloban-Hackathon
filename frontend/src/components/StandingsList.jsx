@@ -10,8 +10,11 @@ function StandingsList({ standings, highlightLeader = true }) {
                     <div className="flex justify-between items-baseline gap-3 text-sm">
                         <span className="font-medium text-foreground">
                             {entry.name}
-                            {entry.party && (
-                                <span className="font-normal text-muted"> · {entry.party}</span>
+                            {(entry.subtitle ?? entry.party) && (
+                                <span className="font-normal text-muted">
+                                    {" "}
+                                    · {entry.subtitle ?? entry.party}
+                                </span>
                             )}
                         </span>
                         <span className="text-muted tabular-nums shrink-0">
