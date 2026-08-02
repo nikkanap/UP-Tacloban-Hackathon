@@ -271,16 +271,3 @@ README REQUIREMENTS:
 17. License
     - If a license exists, document it.
     - Otherwise create a placeholder section.
-
-WRITING REQUIREMENTS:
-- Write as if this repository is intended for professional developers and hackathon judges.
-- Use clear Markdown formatting.
-- Use tables where appropriate.
-- Use Mermaid diagrams where helpful.
-- Be accurate to the codebase.
-- Do not invent features that do not exist.
-- Infer missing details only when strongly supported by the repository structure.
-- Prefer concrete information extracted from the repository over assumptions.
-
-OUTPUT:
-Return only the complete contents of README.md.
