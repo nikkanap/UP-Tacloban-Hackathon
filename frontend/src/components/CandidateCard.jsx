@@ -3,14 +3,14 @@ function CandidateCard({ name, party, image, selected, onClick }) {
         <button
             type="button"
             onClick={onClick}
-            className={`candidate-card relative flex flex-col items-center gap-2 w-60 rounded-3xl p-3 text-left transition ${
+            className={`candidate-card relative flex flex-col items-center gap-2 w-60 rounded-3xl p-3 text-left transition hover:-translate-y-1 active:translate-y-0 ${
                 selected
                     ? "bg-surface shadow-lg ring-2 ring-accent"
-                    : "bg-surface shadow-lg ring-1 ring-transparent hover:ring-border"
+                    : "bg-surface shadow-lg ring-1 ring-transparent hover:ring-border hover:shadow-xl"
             }`}
         >
             {selected && (
-                <span className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-accent text-accent-foreground text-xs font-bold">
+                <span className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-accent text-accent-foreground text-xs font-bold animate-pop-in">
                     ✓
                 </span>
             )}

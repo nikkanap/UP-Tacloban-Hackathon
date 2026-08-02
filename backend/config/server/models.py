@@ -45,7 +45,7 @@ class Candidate(models.Model):
   election = models.ForeignKey(Election, on_delete=models.CASCADE, related_name="candidates", null=True, blank=True)   
   
   def __str__(self):
-      return self.name
+      return self.full_name or f'{self.id}'
   
 class Contract(models.Model):
   wallet_public_key = models.CharField(max_length=100, null=True, blank=True)  

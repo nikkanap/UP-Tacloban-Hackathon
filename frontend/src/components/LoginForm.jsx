@@ -44,7 +44,7 @@ function LoginForm({ onSubmit, isLoading = false, error = "" }) {
                         maskPosition: "center",
                     }}
                 />
-                <span className="text-accent-foreground text-lg font-semibold">SmartElect</span>
+                <span className="text-accent-foreground text-lg font-semibold">BotoKita</span>
             </div>
 
             <div className="px-8 pt-6">
@@ -105,6 +105,24 @@ function LoginForm({ onSubmit, isLoading = false, error = "" }) {
                             />
                         </div>
 
+                {mode === "admin" ? (
+                    <>
+                        <div className="flex flex-col gap-1.5">
+                            <label htmlFor="adminUsername" className="text-sm font-medium text-foreground">
+                                Username
+                            </label>
+                            <input
+                                id="adminUsername"
+                                type="text"
+                                value={voterId}
+                                onChange={(event) => setVoterId(event.target.value)}
+                                placeholder="Enter your voter ID"
+                                autoComplete="username"
+                                required
+                                className="border border-border bg-background text-foreground p-2.5 rounded-lg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
+                            />
+                        </div>
+
                         <div className="flex flex-col gap-1.5">
                             <label htmlFor="adminPassword" className="text-sm font-medium text-foreground">
                                 Password
@@ -140,17 +158,13 @@ function LoginForm({ onSubmit, isLoading = false, error = "" }) {
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                            <label htmlFor="voterKey" className="text-sm font-medium text-foreground">
-                                Voter Key
+                            <label htmlFor="electionId" className="text-sm font-medium text-foreground">
+                                Election ID
                             </label>
                             <input
-                                id="voterKey"
+                                id="electionId"
                                 type="password"
-                                value={voterKey}
-                                onChange={(event) => setVoterKey(event.target.value)}
                                 placeholder="Enter your voter key"
-                                autoComplete="current-password"
-                                required
                                 className="border border-border bg-background text-foreground p-2.5 rounded-lg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
                             />
                         </div>

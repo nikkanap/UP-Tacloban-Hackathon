@@ -26,7 +26,7 @@ function RegisterOrganizationForm() {
                         maskPosition: "center",
                     }}
                 />
-                <span className="text-accent-foreground text-lg font-semibold">SmartElect</span>
+                <span className="text-accent-foreground text-lg font-semibold">BotoKita</span>
             </div>
 
             <form className="flex flex-col gap-5 p-8" onSubmit={handleSubmit}>
