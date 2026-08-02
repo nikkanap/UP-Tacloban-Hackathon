@@ -8,3 +8,6 @@ config/server/migrations/__pycache__
 
 # .env file
 .env
+
+# local sqlite dev database - per-developer state, not source
+*.sqlite3
