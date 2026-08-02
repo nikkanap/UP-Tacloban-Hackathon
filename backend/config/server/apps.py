@@ -25,7 +25,7 @@ def get_admin_seed_users():
         {
             "username": getenv("SUPERUSER_NAME") or "admin",
             "password": getenv("SUPERUSER_PASSWORD") or "admin12345",
-            "email": getenv("SUPERUSER_EMAIL") or "admin@smartelect.local",
+            "email": getenv("SUPERUSER_EMAIL") or "admin@botoKita.local",
         }
     ]
 

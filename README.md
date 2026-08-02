@@ -1,4 +1,4 @@
-# SmartElect
+# BotoKita
 
 Transparent, tamper-resistant elections on Bitcoin Cash — built for the Bitcoin
 Cash Conference Hackathon 2026 by UP Tacloban.
