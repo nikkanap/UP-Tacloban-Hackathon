@@ -163,6 +163,68 @@ class NFTsViewSet(viewsets.ModelViewSet):
 class VotesViewSet(viewsets.ModelViewSet):
     queryset = models.Vote.objects.all()
     serializer_class = serializers.VoteSerializer
+
+    def create(self, request, *args, **kwargs):
+      """Cast the ballot on chain, then record it.
+
+      Deliberately the reverse of how elections and candidates are created.
+      Saving first and minting after would let a failed broadcast leave a row
+      in the tally with no transaction behind it — a vote that is counted but
+      cannot be verified, which is exactly what the ledger is meant to rule
+      out. If the chain rejects the vote, nothing is written.
+      """
+      serializer = self.get_serializer(data=request.data)
+      serializer.is_valid(raise_exception=True)
+
+      election = serializer.validated_data["election"]
+      candidate = serializer.validated_data["candidate"]
+      voter = serializer.validated_data["voter"]
+
+      if not election.nft_category:
+        return Response(
+            {"error": "Election NFT was never minted, so votes cannot be cast."},
+            status=status.HTTP_409_CONFLICT
+        )
+
+      try:
+        txid = self.cast_vote_on_chain(election, candidate, voter)
+      except Exception as e:
+        print(f"Vote not broadcast for {voter.id}: {e}", flush=True)
+        return Response(
+            {"error": f"Vote was not broadcast: {e}"},
+            status=status.HTTP_502_BAD_GATEWAY
+        )
+
+      serializer.save(vote_txid=txid)
+
+      return Response(
+          serializer.data,
+          status=status.HTTP_201_CREATED,
+          headers=self.get_success_headers(serializer.data)
+      )
+
+    def cast_vote_on_chain(self, election, candidate, voter):
+      response = requests.post(
+          f"{BLOCKCHAIN_API}/vote",
+          json={
+            "nft_category": election.nft_category,
+            "candidate_id": candidate.id,
+            "voter_id": voter.id,
+            "open_time": int(election.date_start.timestamp()),
+            "close_time": int(election.date_end.timestamp())
+          },
+          timeout=60
+      )
+
+      response.raise_for_status()
+      data = response.json()
+
+      txid = data.get("txid")
+      if not txid:
+        raise ValueError(data.get("error") or "blockchain service returned no txid")
+
+      print(f"Vote cast for {voter.id}", txid, flush=True)
+      return txid
     
 class CreateVoterNFTsView(views.APIView):
   

@@ -52,9 +52,11 @@ export function buildTally(votes, candidates, positions = []) {
   };
 }
 
-// Distinct voters who have cast at least one vote.
+// Distinct voters who have cast at least one vote. ballot_ref is an opaque
+// per-voter-per-election handle — the API deliberately does not expose voter
+// ids, so turnout is counted without learning who voted.
 export const countBallots = (votes) =>
-  new Set(votes.map((vote) => vote.voter)).size;
+  new Set(votes.map((vote) => vote.ballot_ref)).size;
 
 export const turnoutPercent = (ballotsCast, voterCount) =>
   voterCount > 0 ? Math.round((ballotsCast / voterCount) * 100) : 0;
