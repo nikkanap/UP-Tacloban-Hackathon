@@ -166,7 +166,7 @@
 :root {
     --color-background: #f0faf4;
     --color-surface: #ffffff;
-    --color-border: #c8ecd8;
+    --color-border: #a2ccb5;
     --color-foreground: #052e1c;
     --color-muted: #5a8a72;
 
@@ -187,6 +187,29 @@
         --color-accent: #34d399;
         --color-accent-foreground: #071b12;
     }
+}
+
+/* Manual light/dark overrides for the active palette above.*/
+:root[data-theme="light"] {
+    --color-background: #f0faf4;
+    --color-surface: #ffffff;
+    --color-border: #a2ccb5;
+    --color-foreground: #052e1c;
+    --color-muted: #5a8a72;
+
+    --color-accent: #059669;
+    --color-accent-foreground: #ffffff;
+}
+
+:root[data-theme="dark"] {
+    --color-background: #071b12;
+    --color-surface: #0f291b;
+    --color-border: #1f4633;
+    --color-foreground: #e9fbf1;
+    --color-muted: #86c0a3;
+
+    --color-accent: #34d399;
+    --color-accent-foreground: #071b12;
 }
 
 /* Palette 8: Mint Green — light, fresh, modern-clinical trust */
@@ -254,6 +277,24 @@
     --safe-width: var(--safe-width);
 }
 
+html {
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+    html {
+        color-scheme: dark;
+    }
+}
+
+html[data-theme="light"] {
+    color-scheme: light;
+}
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+}
+
 html,
 body {
     margin: 0;
@@ -282,4 +323,41 @@ h2 {
 }
 h3 {
     font-size: 1.25rem;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-14px); }
+}
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fade-in-scale {
+    from { opacity: 0; transform: scale(0.95) translateY(-4px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes pop-in {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+.animate-fade-in {
+    animation: fade-in 0.2s ease-out;
+}
+
+.animate-fade-in-scale {
+    animation: fade-in-scale 0.15s ease-out;
+    transform-origin: top right;
+}
+
+.animate-pop-in {
+    animation: pop-in 0.2s ease-out;
 }

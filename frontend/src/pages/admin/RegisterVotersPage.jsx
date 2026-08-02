@@ -86,7 +86,7 @@ function RegisterVotersPage() {
       <button
         type="button"
         onClick={() => navigate("/admin/dashboard")}
-        className="self-start text-sm font-medium text-muted transition hover:text-foreground"
+        className="self-start px-4 py-2 rounded-lg font-medium text-foreground border border-border transition hover:bg-surface"
       >
         ← Back to Dashboard
       </button>

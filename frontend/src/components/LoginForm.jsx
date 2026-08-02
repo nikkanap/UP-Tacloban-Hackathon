@@ -8,7 +8,7 @@ function LoginForm() {
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        navigate(mode === "voter" ? "/voter-dashboard" : "/admin/dashboard");
+        navigate(mode === "voter" ? "/election-details" : "/admin/dashboard");
     };
 
     return (
@@ -28,7 +28,7 @@ function LoginForm() {
                         maskPosition: "center",
                     }}
                 />
-                <span className="text-accent-foreground text-lg font-semibold">SmartElect</span>
+                <span className="text-accent-foreground text-lg font-semibold">BotoKita</span>
             </div>
 
             <div className="px-8 pt-6">
@@ -80,13 +80,13 @@ function LoginForm() {
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                            <label htmlFor="voterKey" className="text-sm font-medium text-foreground">
-                                Voter Key
+                            <label htmlFor="electionId" className="text-sm font-medium text-foreground">
+                                Election ID
                             </label>
                             <input
-                                id="voterKey"
+                                id="electionId"
                                 type="password"
-                                placeholder="Enter your voter key"
+                                placeholder="Enter your election ID"
                                 className="border border-border bg-background text-foreground p-2.5 rounded-lg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
                             />
                         </div>

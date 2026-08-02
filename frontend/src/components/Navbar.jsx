@@ -7,6 +7,11 @@ function Navbar() {
     const navigate = useNavigate();
     const { fullname, voterId } = useContext(userContext);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [theme, setTheme] = useState(() => {
+        const stored = localStorage.getItem("theme");
+        if (stored === "light" || stored === "dark") return stored;
+        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    });
     const menuRef = useRef(null);
 
     const getInitials = (name) => {
@@ -25,9 +30,18 @@ function Navbar() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+    }, [theme]);
+
     const handleLogout = () => {
         setIsMenuOpen(false);
         navigate("/login");
+    };
+
+    const toggleTheme = () => {
+        setTheme((prev) => (prev === "dark" ? "light" : "dark"));
     };
 
     return (
@@ -48,14 +62,14 @@ function Navbar() {
                             maskPosition: "center",
                         }}
                     />
-                    <h2 className="text-foreground font-semibold tracking-wide">SmartElect</h2>
+                    <h2 className="text-foreground font-semibold tracking-wide">BotoKita</h2>
                 </div>
 
                 <div className="relative" ref={menuRef}>
                     <button
                         type="button"
                         onClick={() => setIsMenuOpen((prev) => !prev)}
-                        className="flex items-center gap-3 text-foreground font-medium rounded-lg px-2 py-1.5 transition hover:bg-surface"
+                        className="flex items-center gap-3 text-foreground font-medium rounded-lg px-2 py-1.5 transition hover:bg-surface hover:-translate-y-0.5 active:translate-y-0"
                     >
                         <span className="flex items-center justify-center bg-accent text-accent-foreground text-sm font-semibold h-9 w-9 rounded-full">
                             {getInitials(fullname)}
@@ -64,7 +78,7 @@ function Navbar() {
                     </button>
 
                     {isMenuOpen && (
-                        <div className="absolute right-0 top-full mt-2 w-64 bg-surface border border-border rounded-2xl shadow-lg overflow-hidden z-50">
+                        <div className="absolute right-0 top-full mt-2 w-64 bg-surface border border-border rounded-2xl shadow-lg overflow-hidden z-50 animate-fade-in-scale">
                             <div className="flex flex-col items-center gap-2 p-5">
                                 <span className="flex items-center justify-center bg-accent text-accent-foreground text-lg font-semibold h-14 w-14 rounded-full">
                                     {getInitials(fullname)}
@@ -74,6 +88,21 @@ function Navbar() {
                                     <span className="text-xs text-muted">Voter ID: {voterId}</span>
                                 </div>
                             </div>
+
+                            <button
+                                type="button"
+                                onClick={toggleTheme}
+                                className="w-full flex items-center justify-between px-5 py-3 text-left font-medium text-foreground border-t border-border transition hover:bg-background"
+                            >
+                                <span>{theme === "dark" ? "Dark Mode" : "Light Mode"}</span>
+                                <span className="flex items-center bg-background rounded-full p-0.5 w-10 h-6 border border-border">
+                                    <span
+                                        className={`h-4 w-4 rounded-full bg-accent transition-transform ${
+                                            theme === "dark" ? "translate-x-4" : "translate-x-0"
+                                        }`}
+                                    />
+                                </span>
+                            </button>
 
                             <button
                                 type="button"
