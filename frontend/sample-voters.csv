@@ -1,0 +1,15 @@
+name,voter id,email
+Juan Dela Cruz,RHC-04821,juan@email.com
+Maria Santos,RHC-04822,maria@email.com
+Jose Rizal,RHC-04823,jose@email.com
+Andres Bonifacio,RHC-04824,andres@email.com
+Gabriela Silang,RHC-04825,gabriela@email.com
+Apolinario Mabini,RHC-04826,apolinario@email.com
+Melchora Aquino,RHC-04827,melchora@email.com
+Emilio Aguinaldo,RHC-04828,emilio@email.com
+
+Missing ID Person,,noid@email.com
+,RHC-04830,noname@email.com
+OnlyOneColumn
+   Padded Name   ,   RHC-04831   ,   padded@email.com
+"Cruz, Juan",RHC-04832,quoted@email.com
