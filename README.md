@@ -165,3 +165,122 @@ election keyed to `SECRET_KEY` — stable enough to count distinct ballots,
 opaque enough that the roll cannot be enumerated to recover who voted.
 
 Public tally, private ballot.
+Analyze the entire repository and generate a professional README.md file for this project.
+
+IMPORTANT RULES:
+- DO NOT modify, rename, move, or delete any existing files.
+- DO NOT create any files except a single README.md.
+- DO NOT change source code, configurations, dependencies, or project structure.
+- Your only task is to produce a complete README.md based on the existing codebase.
+
+README REQUIREMENTS:
+
+1. Project Overview
+   - Determine the project's purpose from the codebase.
+   - Write a concise executive summary.
+   - Explain the problem being solved.
+   - Explain how Django, CashScript, React, and Vite interact within the system.
+
+2. Features
+   - List all major user-facing and technical features.
+   - Separate blockchain features from web application features.
+   - Include authentication, APIs, smart contracts, tokens, auctions, voting, loans, escrow, NFTs, or any other detected functionality.
+
+3. Technology Stack
+   Create a table containing:
+   - Frontend technologies
+   - Backend technologies
+   - Blockchain technologies
+   - Database technologies
+   - Infrastructure and deployment technologies
+
+4. Architecture
+   - Explain the overall architecture.
+   - Describe frontend, backend, database, blockchain, and external services.
+   - Include a Mermaid architecture diagram.
+
+5. Project Structure
+   - Generate a tree view of the repository.
+   - Briefly explain the purpose of each major directory.
+
+6. Installation Guide
+   Include:
+   - Prerequisites
+   - Python requirements
+   - Node.js requirements
+   - Database setup
+   - Environment variables
+   - Backend installation
+   - Frontend installation
+   - Smart contract compilation steps if applicable
+
+7. Configuration
+   - Identify environment variables from the codebase.
+   - Document them in a table:
+     Variable | Required | Description | Example
+
+8. Running the Project
+   Include commands for:
+   - Backend development server
+   - Frontend development server
+   - Contract compilation
+   - Database migrations
+   - Production builds
+
+9. API Documentation
+   - Discover all API endpoints.
+   - Group them by feature.
+   - Create tables containing:
+     Method | Endpoint | Description
+
+10. Smart Contract Documentation
+    For each CashScript contract:
+    - Contract name
+    - Purpose
+    - Constructor parameters
+    - Public functions
+    - Validation logic
+    - Example transaction flow
+
+11. Database Models
+    - Document major Django models.
+    - Explain relationships between models.
+
+12. Authentication and Security
+    - Explain authentication flow.
+    - Explain blockchain verification mechanisms.
+    - Explain authorization rules if present.
+
+13. Deployment
+    - Explain deployment architecture based on repository files.
+    - Document Docker, Nginx, Gunicorn, Redis, Channels, PostgreSQL, or other infrastructure if present.
+
+14. Development Workflow
+    - Explain how developers should work on the project.
+    - Include migration workflow.
+    - Include frontend workflow.
+    - Include contract development workflow.
+
+15. Troubleshooting
+    - Add common setup and runtime issues that can be inferred from the project.
+    - Include likely fixes.
+
+16. Future Improvements
+    - Suggest reasonable future enhancements based on the codebase.
+
+17. License
+    - If a license exists, document it.
+    - Otherwise create a placeholder section.
+
+WRITING REQUIREMENTS:
+- Write as if this repository is intended for professional developers and hackathon judges.
+- Use clear Markdown formatting.
+- Use tables where appropriate.
+- Use Mermaid diagrams where helpful.
+- Be accurate to the codebase.
+- Do not invent features that do not exist.
+- Infer missing details only when strongly supported by the repository structure.
+- Prefer concrete information extracted from the repository over assumptions.
+
+OUTPUT:
+Return only the complete contents of README.md.

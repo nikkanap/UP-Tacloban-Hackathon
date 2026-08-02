@@ -1,77 +1,146 @@
 services:
   db:
-    container_name: uptc-psql
-    image: postgres
+    image: postgres:17-alpine
+    container_name: smartelect-db
     environment:
-      POSTGRES_DB: hackathon
+      POSTGRES_DB: ${DATABASE_NAME:-hackathon}
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5332:5432"
     healthcheck:
-      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${DATABASE_USER} -d hackathon'"]
-      interval: 5s
-      timeout: 3s
-      retries: 3
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME:-hackathon}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - smartelect
 
-  uptc-makemigrate:
+  blockchain:
+    image: smartelect-blockchain
+    container_name: smartelect-blockchain
+    build:
+      context: ./blockchain
     env_file:
       - .env
-    image: uptc-makemigrate
-    container_name: make-migrations
-    build: ./config
-    working_dir: /app
-    command: python manage.py makemigrations
-    depends_on:
-      db:
-        condition: service_healthy
+    environment:
+      NETWORK: ${NETWORK:-chipnet}
+    expose:
+      - "3001"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://blockchain:3001/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - smartelect
 
-  uptc-migrate:
+  config:
+    image: smartelect-config
+    container_name: smartelect-config
+    build:
+      context: ./config
     env_file:
       - .env
-    image: uptc-migrate
-    container_name: migrate
-    build: ./config
-    working_dir: /app
-    command: python manage.py migrate
-    depends_on:
-      uptc-makemigrate:
-        condition: service_completed_successfully
-
-  uptc-server:
-    env_file:
-      - .env
-    container_name: uptc-server
-    build: ./config
-    working_dir: /app
-    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      BLOCKCHAIN_API: http://blockchain:3001
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+      python -c \"import os; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings'); from django.conf import settings; settings.STATIC_ROOT = '/vol/static'; import django; django.setup(); from django.core.management import call_command; call_command('collectstatic', interactive=False, verbosity=0)\" &&
+      gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-3} --access-logfile - --error-logfile -"
     volumes:
-      - ./config:/app
+      - django_static:/vol/static
+      - django_media:/app/media
     expose:
       - "8000"
     depends_on:
-      uptc-migrate:
-        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+      blockchain:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://config:8000/api/elections/', timeout=5).read()\""
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
+    networks:
+      - smartelect
 
-  blockchain-service:
-    build: ./blockchain
-    container_name: blockchain-server
-    command: npm run dev
-    env_file:
-      - .env
-    expose:
-      - "3001"
+  frontend:
+    image: smartelect-frontend
+    container_name: smartelect-frontend
+    build:
+      context: ../frontend
+      args:
+        VITE_API_LINK: /api/
+        VITE_API_BASE_URL: /api
+        VITE_EXPLORER_TX_URL: ${VITE_EXPLORER_TX_URL:-https://chipnet.imaginary.cash/tx/}
+    volumes:
+      - frontend_dist:/usr/share/nginx/html
+    command: >
+      sh -c "rm -rf /usr/share/nginx/html/* &&
+      cp -a /app/dist/. /usr/share/nginx/html/ &&
+      tail -f /dev/null"
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /usr/share/nginx/html/index.html"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+    networks:
+      - smartelect
 
   nginx:
-    image: nginx:alpine
-    container_name: nginx
+    image: nginx:1.27-alpine
+    container_name: smartelect-nginx
     ports:
       - "80:80"
     volumes:
-      - ./config/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./config/media:/app/media
-      - ./config/static:/app/static
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - frontend_dist:/usr/share/nginx/html:ro
+      - django_static:/app/static:ro
+      - django_media:/app/media:ro
     depends_on:
-      - uptc-server
+      frontend:
+        condition: service_healthy
+      config:
+        condition: service_healthy
+      blockchain:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://nginx/ >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
+    networks:
+      - smartelect
+
+volumes:
+  postgres_data:
+  frontend_dist:
+  django_static:
+  django_media:
+
+networks:
+  smartelect:
+    driver: bridge
