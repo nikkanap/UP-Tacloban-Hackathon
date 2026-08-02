@@ -1,4 +1,4 @@
-function ReviewVotesPanel({ electionCandidates, selections, onChangeVote, onSubmit, onBack }) {
+function ReviewVotesPanel({ electionCandidates, selections, onChangeVote, onSubmit, onBack, isSubmitting = false }) {
     return (
         <div className="flex flex-col gap-5 bg-surface p-5 rounded-3xl shadow-lg">
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
@@ -71,9 +71,10 @@ function ReviewVotesPanel({ electionCandidates, selections, onChangeVote, onSubm
                 <button
                     type="button"
                     onClick={onSubmit}
-                    className="px-5 py-2.5 rounded-lg font-medium bg-accent text-accent-foreground transition hover:opacity-90 active:opacity-80"
+                    disabled={isSubmitting}
+                    className="px-5 py-2.5 rounded-lg font-medium bg-accent text-accent-foreground transition hover:opacity-90 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    Submit Votes
+                    {isSubmitting ? "Submitting..." : "Submit Votes"}
                 </button>
             </div>
         </div>

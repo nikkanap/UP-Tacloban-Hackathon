@@ -6,6 +6,7 @@ function ConfirmModal({
     cancelLabel = "Cancel",
     onConfirm,
     onCancel,
+    confirmDisabled = false,
 }) {
     if (!open) return null;
 
@@ -30,7 +31,8 @@ function ConfirmModal({
                     <button
                         type="button"
                         onClick={onConfirm}
-                        className="px-5 py-2.5 rounded-lg font-medium bg-accent text-accent-foreground transition hover:opacity-90 active:opacity-80"
+                        disabled={confirmDisabled}
+                        className="px-5 py-2.5 rounded-lg font-medium bg-accent text-accent-foreground transition hover:opacity-90 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {confirmLabel}
                     </button>

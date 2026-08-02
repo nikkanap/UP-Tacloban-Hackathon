@@ -1,6 +1,7 @@
-import { useContext, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useContext, useEffect, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { electionDataContext } from "../App";
+import { apiRequest } from "../api";
 import VotingPanel from "../components/VotingPanel";
 import ReviewVotesPanel from "../components/ReviewVotesPanel";
 import SubmittedVotePanel from "../components/SubmittedVotePanel";
@@ -9,11 +10,50 @@ import ProgressBar from "../components/ProgressBar";
 import ConfirmModal from "../components/ConfirmModal";
 import StatusBadge from "../components/StatusBadge";
 import useCountdown from "../hooks/useCountdown";
+import defaultCandidateImage from "../assets/images/candidates/default-candidate.png";
+
+const asArray = (data) => Array.isArray(data) ? data : data?.results ?? [];
+
+const sameId = (left, right) => String(left) === String(right);
+
+const toDate = (value) => {
+    const date = value ? new Date(value) : null;
+    return date && !Number.isNaN(date.getTime()) ? date : null;
+};
+
+const getStatus = (startTime, endTime) => {
+    const now = new Date();
+    if (startTime && now < startTime) return "upcoming";
+    if (endTime && now > endTime) return "completed";
+    return "ongoing";
+};
+
+const getCurrentVoter = () => {
+    try {
+        return JSON.parse(localStorage.getItem("currentVoter") || "null");
+    } catch {
+        localStorage.removeItem("currentVoter");
+        return null;
+    }
+};
 
 function ElectionVotingPage(){
 
     const navigate = useNavigate();
-    const { electionData, electionCandidates } = useContext(electionDataContext);
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
+    const fallbackData = useContext(electionDataContext);
+    const requestedElectionId =
+        searchParams.get("election") ||
+        searchParams.get("id") ||
+        location.state?.electionData?.id;
+    const [apiData, setApiData] = useState(null);
+    const [isLoadingElection, setIsLoadingElection] = useState(Boolean(requestedElectionId));
+    const [loadError, setLoadError] = useState("");
+    const electionData = apiData?.electionData ?? location.state?.electionData ?? fallbackData.electionData;
+    const electionCandidates = apiData?.electionCandidates ?? location.state?.electionCandidates ?? fallbackData.electionCandidates;
+    const electionId = requestedElectionId || electionData.id;
+    const detailsPath = electionId ? `/election-details?election=${electionId}` : "/election-details";
     const [activePosition, setActivePosition] = useState(0);
     const [selections, setSelections] = useState({});
     const [isReviewing, setIsReviewing] = useState(false);
@@ -21,19 +61,117 @@ function ElectionVotingPage(){
     const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
     const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
     const [ballotId, setBallotId] = useState(null);
+    const [submitError, setSubmitError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const timeLeft = useCountdown(electionData.endTime);
 
     const currentPosition = electionCandidates[activePosition];
     const isLastPosition = activePosition === electionCandidates.length - 1;
 
+    useEffect(() => {
+        if (!requestedElectionId) return undefined;
+
+        let isMounted = true;
+
+        const loadElection = async () => {
+            setIsLoadingElection(true);
+            setLoadError("");
+
+            try {
+                const [
+                    election,
+                    positionsResponse,
+                    candidatesResponse,
+                    votesResponse,
+                    votersResponse,
+                    turnoutResponse,
+                ] = await Promise.all([
+                    apiRequest(`elections/${requestedElectionId}/`),
+                    apiRequest("positions/"),
+                    apiRequest("candidates/"),
+                    apiRequest("votes/"),
+                    apiRequest("voters/"),
+                    apiRequest(`elections/${requestedElectionId}/turnout/`).catch(() => null),
+                ]);
+
+                const positions = asArray(positionsResponse).filter((position) =>
+                    sameId(position.election, election.id),
+                );
+                const candidates = asArray(candidatesResponse).filter((candidate) =>
+                    sameId(candidate.election, election.id),
+                );
+                const votes = asArray(votesResponse).filter((vote) =>
+                    sameId(vote.election, election.id),
+                );
+                const voters = asArray(votersResponse);
+                const startTime = toDate(election.date_start);
+                const endTime = toDate(election.date_end);
+                const votedVoterIds = new Set(
+                    votes
+                        .map((vote) => vote.voter)
+                        .filter((voterId) => voterId !== null && voterId !== undefined),
+                );
+
+                const electionCandidates = positions.map((position) => ({
+                    position: position.name || `Position ${position.id}`,
+                    maxVotes: Number(position.seats) || 1,
+                    candidates: candidates
+                        .filter((candidate) => sameId(candidate.position, position.id))
+                        .map((candidate) => ({
+                            id: candidate.id,
+                            name: candidate.full_name || `Candidate ${candidate.id}`,
+                            party: candidate.party ?? "",
+                            image: defaultCandidateImage,
+                        })),
+                }));
+
+                if (isMounted) {
+                    setApiData({
+                        electionData: {
+                            id: election.id,
+                            title: election.name || `Election ${election.id}`,
+                            description:
+                                election.nft_category
+                                    ? `Election NFT category: ${election.nft_category}`
+                                    : "Election details and live voting information.",
+                            status: getStatus(startTime, endTime),
+                            totalVoters: turnoutResponse?.total_voters ?? voters.length,
+                            totalVotersVoted: turnoutResponse?.voted ?? votedVoterIds.size,
+                            startTime,
+                            endTime,
+                        },
+                        electionCandidates,
+                    });
+                    setActivePosition(0);
+                    setSelections({});
+                    setIsReviewing(false);
+                }
+            } catch (error) {
+                if (isMounted) {
+                    setLoadError(error.message);
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoadingElection(false);
+                }
+            }
+        };
+
+        loadElection();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [requestedElectionId]);
+
     const formatDateTime = (date) =>
-        date.toLocaleString("en-US", {
+        date ? date.toLocaleString("en-US", {
             month: "long",
             day: "numeric",
             year: "numeric",
             hour: "numeric",
             minute: "2-digit",
-        });
+        }) : "Not scheduled";
 
     const toggleCandidate = (position, candidateId) => {
         setSelections((prev) => {
@@ -66,9 +204,66 @@ function ElectionVotingPage(){
 
     const requestSubmit = () => setIsSubmitModalOpen(true);
 
-    const confirmSubmit = () => {
-        setIsSubmitModalOpen(false);
-        setBallotId(`${Math.floor(10 + Math.random() * 90)}-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(100 + Math.random() * 900)}`);
+    const confirmSubmit = async () => {
+        const candidateIds = Object.values(selections).flat();
+        const currentVoter = getCurrentVoter();
+
+        setSubmitError("");
+
+        if (!currentVoter?.id) {
+            setSubmitError("Please log in before submitting your vote.");
+            setIsSubmitModalOpen(false);
+            return;
+        }
+
+        if (!electionId) {
+            setSubmitError("Election ID is missing.");
+            setIsSubmitModalOpen(false);
+            return;
+        }
+
+        if (candidateIds.length === 0) {
+            setSubmitError("Select at least one candidate before submitting.");
+            setIsSubmitModalOpen(false);
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        try {
+            const result = await apiRequest("votes/", {
+                method: "POST",
+                body: JSON.stringify({
+                    election: electionId,
+                    voter: currentVoter.id,
+                    candidate_ids: candidateIds,
+                }),
+            });
+
+            const txids = result.txids ?? result.votes?.map((vote) => vote.vote_txid).filter(Boolean) ?? [];
+            const txid = txids[0] ?? "";
+            setBallotId(txid);
+            const resultsParams = new URLSearchParams();
+            if (electionId) resultsParams.set("election", electionId);
+            if (txid) resultsParams.set("txid", txid);
+            if (txids.length > 0) resultsParams.set("txids", txids.join(","));
+
+            navigate(`/election-results?${resultsParams.toString()}`, {
+                state: {
+                    electionId,
+                    txid,
+                    txids,
+                    submittedVotes: result.votes ?? [],
+                    submittedCandidateIds: candidateIds,
+                },
+            });
+        } catch (error) {
+            console.error(error);
+            setSubmitError(error.message);
+        } finally {
+            setIsSubmitting(false);
+            setIsSubmitModalOpen(false);
+        }
     };
 
     const goToNext = () => {
@@ -86,7 +281,7 @@ function ElectionVotingPage(){
 
     const requestLeave = () => {
         if (ballotId) {
-            navigate("/election-details");
+            navigate(detailsPath);
         } else {
             setIsLeaveModalOpen(true);
         }
@@ -94,11 +289,23 @@ function ElectionVotingPage(){
 
     const confirmLeave = () => {
         setIsLeaveModalOpen(false);
-        navigate("/election-details");
+        navigate(detailsPath);
     };
 
     return(
         <div className="flex flex-col gap-6 min-h-full">
+            {isLoadingElection && (
+                <div className="bg-surface rounded-2xl px-4 py-3 text-sm text-muted">
+                    Loading ballot...
+                </div>
+            )}
+
+            {loadError && (
+                <div className="bg-surface rounded-2xl px-4 py-3 text-sm text-red-600">
+                    {loadError}
+                </div>
+            )}
+
             <div className="flex flex-col min-[1049px]:flex-row min-[1049px]:items-center justify-between gap-4">
                 <div className="flex flex-col gap-2 flex-1 min-w-0">
                     <button
@@ -154,12 +361,18 @@ function ElectionVotingPage(){
             </div>
             <VotingRoadmap currentStep={ballotId ? 2 : isReviewing ? 1 : 0} />
 
+            {submitError && (
+                <div className="bg-surface rounded-2xl px-4 py-3 text-sm text-red-600">
+                    {submitError}
+                </div>
+            )}
+
             {/* Election Voting */}
             {ballotId ? (
                 <SubmittedVotePanel
                     ballotId={ballotId}
                     onVerify={() => navigate("/verify-vote", { state: { ballotId } })}
-                    onBackToDetails={() => navigate("/election-details")}
+                    onBackToDetails={() => navigate(detailsPath)}
                 />
             ) : isReviewing ? (
                 <ReviewVotesPanel
@@ -167,6 +380,7 @@ function ElectionVotingPage(){
                     selections={selections}
                     onChangeVote={changeVote}
                     onSubmit={requestSubmit}
+                    isSubmitting={isSubmitting}
                     onBack={() => setIsReviewing(false)}
                 />
             ) : (
@@ -205,10 +419,11 @@ function ElectionVotingPage(){
                 open={isSubmitModalOpen}
                 title="Submit your votes?"
                 message="You won't be able to change your selections after submitting."
-                confirmLabel="Submit"
+                confirmLabel={isSubmitting ? "Submitting..." : "Submit"}
                 cancelLabel="Cancel"
                 onConfirm={confirmSubmit}
                 onCancel={() => setIsSubmitModalOpen(false)}
+                confirmDisabled={isSubmitting}
             />
         </div>
     )

@@ -1,22 +1,56 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LockedNotice from "../../components/LockedNotice";
+import { apiRequest } from "../../api";
 import { useAdminElection } from "../../context/AdminElectionContext";
 
 const inputClass =
   "border border-border bg-background text-foreground p-2.5 rounded-lg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20";
 
 const PREVIEW_ROW_COUNT = 3;
+const isNumericId = (value) => /^\d+$/.test(String(value).trim());
+const defaultForm = {
+  name: "",
+  voterId: "",
+  voterKey: "",
+  gender: "NTS",
+  dateOfBirth: "",
+  placeOfBirth: "",
+  email: "",
+};
+
+const toVoterPayload = (voter) => ({
+  id: voter.voterId.trim(),
+  voter_key: voter.voterKey.trim(),
+  full_name: voter.name.trim(),
+  gender: voter.gender || "NTS",
+  ...(voter.dateOfBirth && { date_of_birth: voter.dateOfBirth }),
+  ...(voter.placeOfBirth && { place_of_birth: voter.placeOfBirth.trim() }),
+  ...(voter.email && { email_address: voter.email.trim() }),
+});
+
+const fromVoterResponse = (voter) => ({
+  id: voter.id,
+  name: voter.full_name,
+  voterId: voter.id,
+  voterKey: voter.voter_key,
+  gender: voter.gender,
+  dateOfBirth: voter.date_of_birth,
+  placeOfBirth: voter.place_of_birth,
+  email: voter.email_address,
+});
 
 function RegisterVotersPage() {
   const navigate = useNavigate();
   const { addVoter, importVoters, locked } = useAdminElection();
 
   const [activeTab, setActiveTab] = useState("individual");
-  const [form, setForm] = useState({ name: "", voterId: "", email: "" });
+  const [form, setForm] = useState(defaultForm);
   const [fileName, setFileName] = useState("");
   const [parsedRows, setParsedRows] = useState([]);
   const [skippedRows, setSkippedRows] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
 
   if (locked) return <LockedNotice />;
 
@@ -48,9 +82,13 @@ function RegisterVotersPage() {
       // A row is only usable with both a name and a voter ID. Short or junk
       // lines would otherwise import as blank voters and inflate the count.
       const cleaned = dataRows
-        .map(([name, voterId, email]) => ({
+        .map(([name, voterId, email, voterKey, gender, dateOfBirth, placeOfBirth]) => ({
           name: (name ?? "").trim(),
           voterId: (voterId ?? "").trim(),
+          voterKey: (voterKey ?? voterId ?? "").trim(),
+          gender: (gender ?? "NTS").trim() || "NTS",
+          dateOfBirth: (dateOfBirth ?? "").trim(),
+          placeOfBirth: (placeOfBirth ?? "").trim(),
           email: (email ?? "").trim(),
         }))
         .filter((row) => row.name && row.voterId);
@@ -65,20 +103,69 @@ function RegisterVotersPage() {
     input.value = "";
   };
 
-  const handleIndividualSubmit = (event) => {
+  const handleIndividualSubmit = async (event) => {
     event.preventDefault();
-    if (!form.name.trim() || !form.voterId.trim()) return;
-    addVoter({ ...form, name: form.name.trim(), voterId: form.voterId.trim() });
-    setForm({ name: "", voterId: "", email: "" });
+    if (!form.name.trim() || !form.voterId.trim() || !form.voterKey.trim()) {
+      setError("Full name, voter ID, and voter key are required.");
+      return;
+    }
+
+    if (!isNumericId(form.voterId)) {
+      setError("Voter ID must be numeric for blockchain NFT creation.");
+      return;
+    }
+
+    setIsSaving(true);
+    setError("");
+
+    try {
+      const voter = await apiRequest("voters/", {
+        method: "POST",
+        body: JSON.stringify(toVoterPayload(form)),
+      });
+
+      addVoter(fromVoterResponse(voter));
+      setForm(defaultForm);
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (parsedRows.length === 0) return;
-    importVoters(parsedRows);
-    setParsedRows([]);
-    setSkippedRows(0);
-    setFileName("");
-    navigate("/admin/review");
+    const nonNumericRow = parsedRows.find((row) => !isNumericId(row.voterId));
+
+    if (nonNumericRow) {
+      setError(`Voter ID must be numeric for blockchain NFT creation: ${nonNumericRow.voterId}`);
+      return;
+    }
+
+    setIsSaving(true);
+    setError("");
+
+    try {
+      const createdVoters = [];
+
+      for (const row of parsedRows) {
+        const voter = await apiRequest("voters/", {
+          method: "POST",
+          body: JSON.stringify(toVoterPayload(row)),
+        });
+        createdVoters.push(fromVoterResponse(voter));
+      }
+
+      importVoters(createdVoters);
+      setParsedRows([]);
+      setSkippedRows(0);
+      setFileName("");
+      navigate("/admin/review");
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -157,6 +244,77 @@ function RegisterVotersPage() {
 
             <div className="flex flex-col gap-1.5">
               <label
+                htmlFor="voterKey"
+                className="text-sm font-medium text-foreground"
+              >
+                Voter Key
+              </label>
+              <input
+                id="voterKey"
+                type="text"
+                value={form.voterKey}
+                onChange={updateField("voterKey")}
+                placeholder="Credential key"
+                className={inputClass}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="voterGender"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Gender
+                </label>
+                <select
+                  id="voterGender"
+                  value={form.gender}
+                  onChange={updateField("gender")}
+                  className={inputClass}
+                >
+                  <option value="FE">Female</option>
+                  <option value="MA">Male</option>
+                  <option value="NTS">Not to say</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="voterBirthDate"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Date of Birth
+                </label>
+                <input
+                  id="voterBirthDate"
+                  type="date"
+                  value={form.dateOfBirth}
+                  onChange={updateField("dateOfBirth")}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="voterBirthPlace"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Place of Birth
+                </label>
+                <input
+                  id="voterBirthPlace"
+                  type="text"
+                  value={form.placeOfBirth}
+                  onChange={updateField("placeOfBirth")}
+                  placeholder="Tacloban City"
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label
                 htmlFor="voterEmail"
                 className="text-sm font-medium text-foreground"
               >
@@ -172,12 +330,15 @@ function RegisterVotersPage() {
               />
             </div>
 
+            {error && <p className="text-sm text-red-600">{error}</p>}
+
             <div className="flex justify-end gap-3">
               <button
                 type="submit"
+                disabled={isSaving}
                 className="px-5 py-2.5 rounded-lg font-medium border border-border text-foreground transition hover:bg-background active:opacity-80"
               >
-                Register Voter
+                {isSaving ? "Saving..." : "Register Voter"}
               </button>
               <button
                 type="button"
@@ -202,7 +363,7 @@ function RegisterVotersPage() {
                   ? `${parsedRows.length} valid rows${
                       skippedRows > 0 ? ` · ${skippedRows} skipped` : ""
                     } · choose another file to replace`
-                  : "Columns: name, voter ID, email"}
+                  : "Columns: name, voter ID, email, voter key, gender, birth date, birth place"}
               </span>
               <input
                 id="csvUpload"
@@ -252,12 +413,15 @@ function RegisterVotersPage() {
               <button
                 type="button"
                 onClick={handleImport}
-                disabled={parsedRows.length === 0}
+                disabled={parsedRows.length === 0 || isSaving}
                 className="px-5 py-2.5 rounded-lg font-medium bg-accent text-accent-foreground transition hover:opacity-90 active:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Confirm &amp; Import {parsedRows.length || ""} Voters
+                {isSaving
+                  ? "Importing..."
+                  : `Confirm & Import ${parsedRows.length || ""} Voters`}
               </button>
             </div>
+            {error && <p className="text-sm text-red-600">{error}</p>}
           </div>
         )}
       </div>
