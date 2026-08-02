@@ -290,7 +290,7 @@ function LiveMonitoringPage() {
                             href={url}
                             target="_blank"
                             rel="noreferrer"
-                            className="font-medium text-accent-foreground underline underline-offset-2"
+                            className="font-medium text-color  underline underline-offset-2"
                           >
                             View on ledger →
                           </a>

@@ -1,82 +1,82 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAdminElection } from "../../context/AdminElectionContext";
-import { buildTally } from "../../utils/mockTally";
+import { api } from "../../services/api";
+import { useApiQuery } from "../../hooks/useApiQuery";
+import {
+  ELECTION_STATUS,
+  STATUS_LABELS,
+  getElectionStatus,
+  formatElectionRange,
+} from "../../utils/electionStatus";
+import { countBallots, turnoutPercent } from "../../utils/tally";
 
 const FILTERS = [
   { id: "all", label: "All" },
-  { id: "draft", label: "Draft" },
-  { id: "live", label: "Live" },
-  { id: "ended", label: "Ended" },
+  { id: ELECTION_STATUS.DRAFT, label: "Draft" },
+  { id: ELECTION_STATUS.LIVE, label: "Live" },
+  { id: ELECTION_STATUS.ENDED, label: "Ended" },
 ];
 
-const STATUS_LABELS = {
-  draft: "Draft",
-  live: "Live",
-  ended: "Ended",
-};
-
-const formatDate = (value) => {
-  if (!value) return null;
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return parsed.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-};
+const EMPTY = { elections: [], votes: [], voters: [] };
 
 function AllElectionsPage() {
   const navigate = useNavigate();
-  const { election, candidates, voters, getElectionStatus, pastElections } =
-    useAdminElection();
-
   const [activeFilter, setActiveFilter] = useState("all");
 
-  const currentStatus = getElectionStatus();
+  const fetchElections = useCallback(async (signal) => {
+    const [elections, votes, voters] = await Promise.all([
+      api.elections.list({ signal }),
+      api.votes.list({ signal }),
+      api.voters.list({ signal }),
+    ]);
+    return { elections, votes, voters };
+  }, []);
 
-  const { votesCast } = useMemo(
-    () => buildTally(candidates, voters.length),
-    [candidates, voters.length]
-  );
+  const { data, loading, error, refresh } = useApiQuery(fetchElections, {
+    initialData: EMPTY,
+  });
 
-  const currentElection = useMemo(() => {
-    const start = formatDate(election.startTime);
-    const end = formatDate(election.endTime);
+  const { elections, votes, voters } = data ?? EMPTY;
 
-    let dates = "Not scheduled";
-    if (start && end) dates = `${start} – ${end}`;
-    else if (start) dates = `From ${start}`;
-    else if (end) dates = `Until ${end}`;
+  const rows = useMemo(() => {
+    // Voters are registered globally rather than per election, so the roll is
+    // the same denominator for every row.
+    const rollSize = voters.length;
 
-    return {
-      id: "current",
-      title: election.title || "Untitled Election",
-      dates: currentStatus === "draft" ? "Not started" : dates,
-      status: currentStatus,
-      turnout:
-        currentStatus === "draft" || voters.length === 0
-          ? null
-          : Math.round((votesCast / voters.length) * 100),
-      isCurrent: true,
-    };
-  }, [election, currentStatus, voters.length, votesCast]);
+    return [...elections]
+      .sort((a, b) => new Date(b.date_start) - new Date(a.date_start))
+      .map((election) => {
+        const status = getElectionStatus(election);
+        const cast = countBallots(
+          votes.filter((vote) => String(vote.election) === String(election.id)),
+        );
 
-  // Only the current election has live data behind it, so only it is clickable.
-  // Where it goes depends on what stage it's at.
-  const openElection = (entry) => {
-    if (!entry.isCurrent) return;
-    if (entry.status === "draft") navigate("/admin/review");
-    else if (entry.status === "live") navigate("/admin/live-monitoring");
-    else navigate("/admin/results");
-  };
+        return {
+          id: election.id,
+          title: election.name,
+          dates:
+            status === ELECTION_STATUS.DRAFT
+              ? "Not started"
+              : formatElectionRange(election),
+          status,
+          // A draft has no turnout to report yet, which is different from 0%.
+          turnout:
+            status === ELECTION_STATUS.DRAFT || rollSize === 0
+              ? null
+              : turnoutPercent(cast, rollSize),
+        };
+      });
+  }, [elections, votes, voters]);
 
-  const allElections = [currentElection, ...pastElections];
-  const visibleElections =
+  const visibleRows =
     activeFilter === "all"
-      ? allElections
-      : allElections.filter((entry) => entry.status === activeFilter);
+      ? rows
+      : rows.filter((row) => row.status === activeFilter);
+
+  // Live monitoring reads any election by id and handles all three states, so
+  // every row has somewhere real to land.
+  const openElection = (row) =>
+    navigate(`/admin/live-monitoring?election=${encodeURIComponent(row.id)}`);
 
   return (
     <div className="flex flex-col gap-6 min-h-full">
@@ -94,6 +94,19 @@ function AllElectionsPage() {
           Every election this portal has set up, past and present.
         </p>
       </div>
+
+      {error && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border border-border rounded-2xl p-4">
+          <span className="text-sm text-foreground">{error.message}</span>
+          <button
+            type="button"
+            onClick={refresh}
+            className="px-4 py-1.5 rounded-lg text-sm font-medium bg-accent text-accent-foreground transition hover:opacity-90 active:opacity-80"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-col gap-4 bg-surface rounded-3xl p-5">
         <div className="flex flex-wrap gap-2">
@@ -113,7 +126,22 @@ function AllElectionsPage() {
           ))}
         </div>
 
-        {visibleElections.length === 0 ? (
+        {loading && rows.length === 0 ? (
+          <p className="text-sm text-muted">Loading elections…</p>
+        ) : rows.length === 0 ? (
+          <div className="flex flex-col items-start gap-3">
+            <p className="text-sm text-muted">
+              No elections have been created yet.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/admin/create-election")}
+              className="px-5 py-2.5 rounded-lg font-medium bg-accent text-accent-foreground transition hover:opacity-90 active:opacity-80"
+            >
+              Create an Election
+            </button>
+          </div>
+        ) : visibleRows.length === 0 ? (
           <p className="text-sm text-muted">
             No {STATUS_LABELS[activeFilter]?.toLowerCase()} elections.
           </p>
@@ -129,55 +157,41 @@ function AllElectionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {visibleElections.map((entry) => (
+                {visibleRows.map((row) => (
                   <tr
-                    key={entry.id}
-                    onClick={() => openElection(entry)}
+                    key={row.id}
+                    onClick={() => openElection(row)}
                     onKeyDown={(event) => {
-                      if (!entry.isCurrent) return;
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
-                        openElection(entry);
+                        openElection(row);
                       }
                     }}
-                    tabIndex={entry.isCurrent ? 0 : undefined}
-                    role={entry.isCurrent ? "button" : undefined}
-                    aria-label={
-                      entry.isCurrent ? `Open ${entry.title}` : undefined
-                    }
-                    className={`border-t border-border ${
-                      entry.isCurrent
-                        ? "cursor-pointer hover:bg-background focus:outline-none focus:bg-background"
-                        : ""
-                    }`}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Open ${row.title}`}
+                    className="border-t border-border cursor-pointer hover:bg-background focus:outline-none focus:bg-background"
                   >
                     <td className="py-3 pr-4 font-medium text-foreground">
-                      {entry.title}
-                      {entry.isCurrent && (
-                        <span className="ml-2 text-xs font-normal text-muted">
-                          current
-                        </span>
-                      )}
+                      {row.title}
                     </td>
-                    <td className="py-3 pr-4 text-sm text-muted">
-                      {entry.dates}
-                    </td>
+                    <td className="py-3 pr-4 text-sm text-muted">{row.dates}</td>
                     <td className="py-3 pr-4">
                       <span
                         className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full ${
-                          entry.status === "live"
+                          row.status === ELECTION_STATUS.LIVE
                             ? "bg-accent text-accent-foreground"
                             : "bg-background text-muted"
                         }`}
                       >
-                        {entry.status === "live" && (
+                        {row.status === ELECTION_STATUS.LIVE && (
                           <span className="w-1.5 h-1.5 rounded-full bg-accent-foreground animate-pulse" />
                         )}
-                        {STATUS_LABELS[entry.status]}
+                        {STATUS_LABELS[row.status]}
                       </span>
                     </td>
                     <td className="py-3 text-sm text-muted tabular-nums">
-                      {entry.turnout === null ? "—" : `${entry.turnout}%`}
+                      {row.turnout === null ? "—" : `${row.turnout}%`}
                     </td>
                   </tr>
                 ))}
